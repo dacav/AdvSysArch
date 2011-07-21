@@ -1,0 +1,115 @@
+\documentclass[10pt,a4paper]{article}
+%\documentclass[10pt,twocolumn,a4paper]{article}
+
+\usepackage{amsmath, amssymb, braket}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{a4wide}
+\usepackage[lined]{algorithm2e}
+\usepackage{parcolumns}
+\usepackage{mathpazo}
+\usepackage{acronym}
+
+\usepackage[colorlinks,
+            pdftex,
+            bookmarks=true]{hyperref}
+\hypersetup{
+    pdfauthor = {Giovanni Simoni}
+    pdftitle = {Advanced System and Architectures --- Project report}
+    pdfsubject = {IEEE 1588 PTP synchronization on an embedded platform},
+    pdfkeywords = {CCS, Concurrency Workbench}
+    pdfcreator = {LaTeX with hyperref package},
+    pdfproducer = {pdflatex}
+}
+
+\newcommand{\Note}[1]{\paragraph{Note:}{#1}}
+\newcommand{\FileName}[1]{{\sf {#1}}}
+\newcommand{\Const}[1]{{\tt {#1}}}
+\newcommand{\TechName}[1]{\emph{{#1}}}
+\newcommand{\StdName}[1]{\emph{{#1}}}
+
+\newcommand{\MyBoard}{\TechName{Freescale MPC8313E-RDB}}
+\newcommand{\PPC}{\TechName{Power-PC}}
+\newcommand{\UBoot}{\TechName{U-Boot}}
+\newcommand{\Linux}{\TechName{Linux}}
+\newcommand{\GNULinux}{\TechName{GNU}/\Linux}
+\newcommand{\BusyBox}{\TechName{Linux}}
+\newcommand{\Minicom}{\TechName{Minicom}}
+\newcommand{\LTIB}{\TechName{LTIB}}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2ex}
+
+\title {
+    Project report:\\
+    Advanced System and Architectures\\
+    IEEE 1588 PTP synchronization on an embedded platform
+}
+\author{
+    Giovanni Simoni\\
+    Register 142955\\
+    \href{mailto:giovanni.simoni@roundhousecode.com}
+         {giovanni.simoni@roundhousecode.com}
+}
+
+\begin{document}
+
+\maketitle
+
+    \section*{ \center Abstract }
+
+        The \MyBoard\ is a \PPC-based board equiped with a
+        \TechName{Vitesse VSC7385 L2 switch}, which integrates the
+        \StdName{IEEE 1588} time synchronization protocol.
+
+        TODO: check info and write stuff.
+
+    \newpage
+    \tableofcontents
+
+    \section{ Overview }
+
+        The \MyBoard, henceforth simply referred as \emph{board}, is
+        provided with a \UBoot\ software, which by default loads a \Linux\
+        kernel image with a \BusyBox\ environment. The command lines of
+        both systems can be accessed through the serial port, by using a
+        command like \Minicom\footnote{
+            \url{http://alioth.debian.org/projects/minicom/}. Packaged for
+            both \emph{Debian}-like and \emph{Red-Hat}-like distributions.
+        }. In order to communicate through the serial port, an \emph{USB
+        to serial} adapter can be used: on a recent enough \GNULinux\
+        operating system the procedure should be totally seamless.
+
+        The board comes along with two CD-ROMs providing the
+        \TechName{CodeWarrior} IDE and some kind of loading system based
+        on the \LTIB\footnote{ \url{http://www.bitshrine.org/ltib/} }
+        software, however I'm a suspicious guy, and I tend to mistrust
+        anything trying to simplify my life beyond a certain threshold,
+        especially if they are requiring to run the \emph{rpm} command
+        with \emph{root} permissions on my \emph{Debian-like} OS!
+
+        That's why I opted for the \emph{bare-metal} approach I'm going to
+        describe in this document: both \UBoot\ and \Linux\ can enable the
+        Ethernet interfaces, and this can be exploited to conveniently
+        load programs on the board.
+
+        The CD-ROMs however are not totally useless, since one of them
+        contains some precious files that usually nobody want to produce
+        by themselves:
+        \begin{itemize}
+
+            \item   A fully-fledged cross-compiler for the \PPC\
+                    architecture;
+
+            \item   Pre-compiled binary images of the kernel, the
+                    \BusyBox-based filesystem and the \emph{device tree};
+
+            \item   All the configurations needed to recompile the
+                    mentioned tools.
+
+        \end{itemize}
+
+
+\end{document}
+
