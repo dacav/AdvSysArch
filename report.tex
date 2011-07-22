@@ -2,6 +2,7 @@
 %\documentclass[10pt,twocolumn,a4paper]{article}
 
 \usepackage{amsmath, amssymb, braket}
+\usepackage{listings}
 \usepackage{multicol}
 \usepackage{graphicx}
 \usepackage{subfig}
@@ -10,6 +11,7 @@
 \usepackage{parcolumns}
 \usepackage{mathpazo}
 \usepackage{acronym}
+\usepackage{fancybox}
 
 \usepackage[colorlinks,
             pdftex,
@@ -23,20 +25,49 @@
     pdfproducer = {pdflatex}
 }
 
-\newcommand{\Note}[1]{\paragraph{Note:}{#1}}
-\newcommand{\FileName}[1]{{\sf {#1}}}
-\newcommand{\Const}[1]{{\tt {#1}}}
-\newcommand{\TechName}[1]{\emph{{#1}}}
+\newcommand{\MsgBox}[3]{
+    %\shadowbox{ %
+    \fbox{ %
+        \centering %
+        \begin{minipage}{\textwidth}
+        \vspace{0.3em}
+        \underline{\textbf{{#1}}: {#2}}
+        \vspace{1em}
+        \\
+        {#3}
+        \vspace{0.3em}
+        \end{minipage} %
+    }
+}
+
+\newcommand{\Warn}[2]{\MsgBox{Warning}{#1}{#2}}
+\newcommand{\Note}[2]{\MsgBox{Note}{#1}{#2}}
+\newcommand{\EpicHack}[2]{\MsgBox{Epic Hack}{#1}{#2}}
+
+\newcommand{\FileName}[1]{\textbf{\textsl{\textsf{{#1}}}}}
+\newcommand{\PackageName}[1]{\textbf{\textsl{\textsf{{#1}}}}}
+\newcommand{\Const}[1]{{{\tt {#1}}}}
+\newcommand{\TechName}[1]{\textsf{{#1}}}
+\newcommand{\ToolName}[1]{\emph{{#1}}}
 \newcommand{\StdName}[1]{\emph{{#1}}}
+\newcommand{\Command}[1]{{\tt {#1}}}
 
 \newcommand{\MyBoard}{\TechName{Freescale MPC8313E-RDB}}
 \newcommand{\PPC}{\TechName{Power-PC}}
-\newcommand{\UBoot}{\TechName{U-Boot}}
+\newcommand{\uBoot}{\TechName{U-Boot}}
 \newcommand{\Linux}{\TechName{Linux}}
 \newcommand{\GNULinux}{\TechName{GNU}/\Linux}
 \newcommand{\BusyBox}{\TechName{Linux}}
 \newcommand{\Minicom}{\TechName{Minicom}}
 \newcommand{\LTIB}{\TechName{LTIB}}
+\newcommand{\NetCat}{\TechName{Netcat}}
+\newcommand{\InitRamFs}{\ToolName{initramfs}}
+\newcommand{\TFTPd}{\ToolName{TFTPd}}
+\newcommand{\TFTP}{\StdName{TFTP}}
+\newcommand{\PTPd}{\ToolName{PTPd}}
+\newcommand{\PTP}{\StdName{PTP}}
+\newcommand{\BootP}{\StdName{BootP}}
+\newcommand{\ARP}{\StdName{ARP}}
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{2ex}
@@ -65,18 +96,18 @@
 
         TODO: check info and write stuff.
 
-    \newpage
     \tableofcontents
+    \newpage
 
     \section{ Overview }
 
         The \MyBoard, henceforth simply referred as \emph{board}, is
-        provided with a \UBoot\ software, which by default loads a \Linux\
+        provided with a \uBoot\ software, which by default loads a \Linux\
         kernel image with a \BusyBox\ environment. The command lines of
         both systems can be accessed through the serial port, by using a
         command like \Minicom\footnote{
             \url{http://alioth.debian.org/projects/minicom/}. Packaged for
-            both \emph{Debian}-like and \emph{Red-Hat}-like distributions.
+        both \emph{Debian}-like and \emph{Red-Hat}-like distributions.
         }. In order to communicate through the serial port, an \emph{USB
         to serial} adapter can be used: on a recent enough \GNULinux\
         operating system the procedure should be totally seamless.
@@ -84,32 +115,225 @@
         The board comes along with two CD-ROMs providing the
         \TechName{CodeWarrior} IDE and some kind of loading system based
         on the \LTIB\footnote{ \url{http://www.bitshrine.org/ltib/} }
-        software, however I'm a suspicious guy, and I tend to mistrust
-        anything trying to simplify my life beyond a certain threshold,
-        especially if they are requiring to run the \emph{rpm} command
-        with \emph{root} permissions on my \emph{Debian-like} OS!
+        software, however I'm a suspicious guy, I tend to mistrust
+        anything trying to simplify my life beyond a certain threshold.
+        This is true especially when the software requires to run the
+        \emph{rpm} command with \emph{root} privileges on my
+        \emph{Debian-like} OS!
 
-        That's why I opted for the \emph{bare-metal} approach I'm going to
-        describe in this document: both \UBoot\ and \Linux\ can enable the
-        Ethernet interfaces, and this can be exploited to conveniently
-        load programs on the board.
+        I ran the program into a \TechName{CentOS}-based \emph{chroot
+        jail}, but I still got confused on what the software is supposed
+        to do. Instead of trying understanding it I preferred to do
+        some retro-engineering of the system and go for the
+        \emph{bare-metal} approach I'm going to describe in this
+        document.
+
+        The idea is simple: with both \uBoot\ and \Linux\ the Ethernet
+        interfaces can be enabled, and this can be exploited to
+        conveniently load programs on the board. The development process
+        can be achieved with the classical \emph{editor + compiler}
+        combo, which is definitely the simplest way of getting stuff done.
 
         The CD-ROMs however are not totally useless, since one of them
         contains some precious files that usually nobody want to produce
-        by themselves:
+        by themselves.
+
+    \section{ Retrieving the tools }
+    \label{sec:GetTools}
+
+        Some useful tools and configurations are provided in the CD-ROM:
         \begin{itemize}
+        \item   A fully-fledged cross-compiler for the \PPC\ architecture
+                can be found in the \FileName{pkgs} directory:
+                \FileName{mtwk-lnx-powerpc-gcc-3.4.3-glibc-2.3.3-0.28-1.i686.rpm};
 
-            \item   A fully-fledged cross-compiler for the \PPC\
-                    architecture;
-
-            \item   Pre-compiled binary images of the kernel, the
-                    \BusyBox-based filesystem and the \emph{device tree};
-
-            \item   All the configurations needed to recompile the
-                    mentioned tools.
-
+        \item   The \FileName{images} directory contains all the binary
+                objects to be loaded on the \emph{flash memory} of the board:
+                \begin{itemize}
+                \item   A pre-compiled binary image of the \emph{kernel}:
+                        \FileName{uimage};
+                \item   An image of the \emph{\BusyBox-based filesystem}:
+                        \FileName{rootfs.ext2.gz.uboot};
+                \item   The \emph{device tree blob}:
+                        \FileName{mpc8313erdb.dtb}
+                \end{itemize}
         \end{itemize}
 
+        The configurations files they can be found inside the
+        \FileName{ltib.tar.gz} tarball, in a directory named
+        \FileName{config}. They can be used in case of partial or total
+        rebuilding of the system.
+
+        \Warn{}{
+            If an upgrade to newer versions of the software is required,
+            please mind the fact that old configuration files are usually
+            not suitable for new versions of the software
+        }
+
+    \section{ Re-flashing binary images }
+
+        The \uBoot\ software supports the network booting through \BootP\
+        + \TFTP. This simplifies a lot the transfer of binary images: just
+        setup servers and ask for data from the board!
+
+        \subsection{ Network setup with \uBoot }
+
+            The board is provided with two network interfaces: the
+            \TechName{Vitesse VSC7385} and the \TechName{Marvell}. In
+            \uBoot\ those are respectively enumerated as \Const{TSEC0} and
+            \Const{TSEC1}, and only one of them can be activated per time:
+            this setting is bound by the environment variable named
+            \Const{ethact}\footnote{
+                Thanks to Lorenzo and Mirko for this information!
+            }.
+
+            In order to select the \TechName{Marvell} card the following
+            command is needed:
+\begin{lstlisting}
+    setenv ethact TSEC1
+\end{lstlisting}
+
+            \Note{Variable reset problem}{
+                As specified by the \uBoot\ manual, the internal
+                \uBoot\ environment can be saved by using the
+                \Command{saveenv} command. This works correctly for any
+                variable including \Const{ethact} but, for some reason, the
+                active NIC gets re-assigned when \uBoot\ starts or gets
+                reset.
+            }
+
+            During my experiments I noticed that \uBoot\ allows to set an
+            IP address for the board, thus I skipped the configuration of
+            the \BootP\ daemon and I relied on the default address of the
+            NIC.
+
+            The status of the network connection can be verified by using
+            the simple version of the \emph{ping} program embedded by
+            \uBoot: this works from the board to a host on the network,
+            while the vice-versa won't work. By running a \emph{sniffer}
+            I discovered that \uBoot\ don't answer to \emph{arp
+            requests}, and this must be taken in account in order to
+            achieve a network communication: the MAC address of the board
+            must be specified on the host running the \TFTP\ server. This
+            can be done by using the \Command{arp} program in this way:
+\begin{lstlisting}[language=bash]
+    arp -s 192.168.1.100 00:12:34:56:78
+\end{lstlisting}
+
+            \Note{Deal with \TechName{network-manager}}{
+                The \TechName{network-manager} program, very common on
+                recent \GNULinux\ distributions, deactivates Ethernet
+                interfaces on which there's no carrier. This can be
+                obnoxious, since the \emph{ARP cache} will be cleaned each
+                time! You may want to deactivate
+                \TechName{network-manager} or manually set the \emph{ARP}
+                address each time the board is reset.
+            }
+
+        \subsection{ \TFTP\ repository }
+
+            The \TFTPd\ daemon is packaged for \emph{Debian}-like
+            distributions as \PackageName{tftpd} and \emph{Red-Hat}-like
+            distributions as \PackageName{tftp-server}. In both cases it
+            runs against the \TechName{xinetd} server\footnote{
+                \url{http://xinetd.org}
+            }, thus the configuration must be entered into the
+            \FileName{/etc/xinetd.d} directory. This is the content of my
+            \FileName{/etc/xinetd.d/tftp} file:
+\begin{lstlisting}
+    service tftp
+    {
+        id = tftp-dgram
+        type = UNLISTED
+        disable = no
+        socket_type = dgram
+        protocol = udp
+        wait = yes
+        server = /usr/sbin/in.tftpd
+        server_args = -s /opt/tftpd
+        per_source = 1
+        user = root
+        port = 69
+    }
+\end{lstlisting}
+            where \FileName{/opt/tftpd} is the directory where I stored
+            all the binary objects mentioned in
+            Section~\ref{sec:GetTools}.
+
+            Once the server has been configured, the \TechName{xinetd}
+            daemon must be restarted in order for the modifications to
+            take place.
+
+        \subsection{ Installing binary objects }
+
+    \section{ Program upload techniques }
+
+        \subsection{ Quick \& Ephemeral }
+
+        \subsection{ Slow \& Permanent }
+
+            \subsubsection{ Hacking the filesystem image }
+
+            \subsubsection{ Rebuilding the \InitRamFs }
+
+    \section{ The \PTP\ daemon }
+
+    \section{ Some useful tricks }
+
+        \subsection{ Images checking }
+
+            When I first analyzed the original system on the board, I
+            wasn't sure about which of the binary images were stored
+            inside the flash memory.
+
+            Of course the file names are self-explanatory enough, but the
+            CD-ROM provides many different files of the same type. There
+            are, for instance, many \emph{device tree blobs}:
+            \begin{itemize}
+                \item \FileName{mpc8313erdb.dtb}
+                \item \FileName{mpc8313erdb\_usbgadget\_external\_phy.dtb}
+                \item \FileName{mpc8313erdb\_usbgadget\_internal\_phy.dtb}
+                \item \FileName{mpc8313erdb\_usbhost\_external\_phy.dtb}
+                \item \FileName{mpc8313erdb\_usbotg\_external\_phy.dtb}
+            \end{itemize}
+            How to choose the right one?
+
+            The \uBoot\ system provides a command named
+            \Command{crc}\footnote{
+                \url{http://www.denx.de/wiki/view/DULG/UBootCmdGroupMemory\#Section\_5.9.2.2.}
+            }
+            which as computes the \StdName{CRC-32 checksum} of a certain
+            memory area.
+
+            The size of all \emph{.dtb} files is 12 Kilobytes
+            (\Const{0x3000} in hexadecimal) thus, once
+            the address of the installed \emph{device tree} is known, its
+            \StdName{CRC} can be obtained as follows:
+\begin{lstlisting}
+    => crc fe300000 0x3000
+    CRC32 for fe300000 ... fe302fff ==> cb588b5e
+\end{lstlisting}
+
+            Now we can use a checksum program (like \Command{jacksum}) to
+            obtain the \StdName{CRC-32} of all images:
+\begin{lstlisting}
+    $ for i in *dtb; do jacksum -a crc32 $i; done
+    2678061774	12288	mpc8313erdb.dtb
+    1614041190	12288	mpc8313erdb_usbgadget_external_phy.dtb
+    161761636	12288	mpc8313erdb_usbgadget_internal_phy.dtb
+    2371930621	12288	mpc8313erdb_usbhost_external_phy.dtb
+    3656584488	12288	mpc8313erdb_usbotg_external_phy.dtb
+\end{lstlisting}
+            If we convert in decimal the value extracted from \uBoot\ we
+            get:
+\begin{lstlisting}
+    $ echo 'print 0x9f9fface, "\n"' | perl
+    2678061774
+\end{lstlisting}
+            which corresponds to the \FileName{mpc8313erdb.dtb} file.
+
+            This trick can be used to check consistency of uploaded
+            images.
 
 \end{document}
 
