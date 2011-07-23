@@ -1,0 +1,11 @@
+#!/bin/ash
+
+echo 'Launching ptp'
+/sbin/ptpd2
+
+mount -t proc /proc proc
+mount -t sysfs none /sys
+
+echo 'Ready to go! Welcome!'
+/bin/ash --login
+

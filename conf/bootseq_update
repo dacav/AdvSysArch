@@ -1,0 +1,10 @@
+setenv kernel 0xfe100000
+setenv initramfs 0xfe300000
+setenv devtree 0xfe700000
+setenv filesize 0
+
+tftp ${loadaddr} /rootfs.ptpd.uboot
+erase ${initramfs} +0x${filesize}
+cp.b 0x${loadaddr} ${initramfs} 0x${filesize}
+
+run vendor_bootcmd
