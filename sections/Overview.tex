@@ -1,0 +1,78 @@
+The \MyBoard\ is provided with a \uBoot\ software, which by default loads
+a \Linux\ kernel image with a \BusyBox\ environment. The command lines of
+both systems can be accessed through the serial port, by using a command
+like \Minicom\footnote{ \url{http://alioth.debian.org/projects/minicom/}.
+Packaged for both \emph{Debian}-like and \emph{Red-Hat}-like
+distributions.  }. In order to communicate through the serial port, an
+\emph{USB to serial} adapter can be used: on a recent enough \GNULinux\
+operating system the procedure should be totally seamless.
+
+The board comes along with two CD-ROMs providing the
+\TechName{CodeWarrior} IDE and some kind of loading system based on the
+\LTIB\footnote{ \url{http://www.bitshrine.org/ltib/} } software, however
+I'm a suspicious guy, I tend to mistrust anything trying to simplify my
+life beyond a certain threshold.  This is true especially when the
+software requires to run the \emph{rpm} command with \emph{root}
+privileges on my \emph{Debian-like} OS!
+
+I ran the program into a \TechName{CentOS}-based \emph{chroot jail}, but I
+still got confused on what the software is supposed to do. Instead of
+trying understanding it I preferred to do some retro-engineering of the
+system and go for the \emph{bare-metal} approach I'm going to describe in
+this document.
+
+The idea is simple: with both \uBoot\ and \Linux\ the Ethernet interfaces
+can be enabled, and this can be exploited to conveniently load programs on
+the board. The development process can be achieved with the classical
+\emph{editor + compiler} combo, which in my opinion is definitely the
+simplest way of getting stuff done.
+
+The CD-ROMs however are not totally useless, since one of them contains
+some precious files that usually nobody want to produce by themselves.
+More on that in the next section.
+
+\subsection{ Naming conventions of this document }
+
+    \begin{itemize}
+
+    \item   The \MyBoard\ will be simply referred as
+            ``\emph{board}'';
+
+    \item   The normal computer on which compilations and
+            configurations are achieved is referred as
+            ``\emph{host}'';
+
+    \item   Listings to be executed on the host will have the
+            ``\lstinline{host\$}'' prompt:
+\begin{lstlisting}
+    host$ echo Hello
+\end{lstlisting}
+
+    \item   Listings to be executed on the board with the
+            \BusyBox\ + \Linux\ environment will have the
+            ``\lstinline{board\$}'' prompt:
+\begin{lstlisting}
+    board$ echo Hello
+\end{lstlisting}
+
+    \item   Listings to be executed on the board with the \uBoot
+            system will have the ``\lstinline{=>}'' prompt:
+\begin{lstlisting}
+    => echo Hello
+\end{lstlisting}
+
+
+    \end{itemize}
+
+        \subsection{ What are we running? }
+
+            During the process realization I aimed at time efficiency:
+            instead of producing from scratch all the tools I preferred to
+            hack and modify the existent environment.
+
+            The approach is reasonable, since the system was not that
+            outdated as I initially thought, anyways one might want to
+            update it. The information contained in this document can be
+            very useful also for this kind of operation.
+
+

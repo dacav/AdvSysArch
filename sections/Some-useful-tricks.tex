@@ -1,0 +1,55 @@
+\subsection{ Images checking }
+
+    When I first analyzed the original system on the board, I
+    wasn't sure about which of the binary images were stored
+    inside the flash memory.
+
+    Of course the file names are self-explanatory enough, but the
+    CD-ROM provides many different files of the same type. There
+    are, for instance, many \emph{device tree blobs}:
+    \begin{itemize}
+        \item \FileName{mpc8313erdb.dtb}
+        \item \FileName{mpc8313erdb\_usbgadget\_external\_phy.dtb}
+        \item \FileName{mpc8313erdb\_usbgadget\_internal\_phy.dtb}
+        \item \FileName{mpc8313erdb\_usbhost\_external\_phy.dtb}
+        \item \FileName{mpc8313erdb\_usbotg\_external\_phy.dtb}
+    \end{itemize}
+    How to choose the right one?
+
+    The \uBoot\ system provides a command named
+    \Command{crc}\footnote{
+        \url{http://www.denx.de/wiki/view/DULG/UBootCmdGroupMemory\#Section\_5.9.2.2.}
+    }
+    which as computes the \StdName{CRC-32 checksum} of a certain
+    memory area.
+
+    The size of all \emph{.dtb} files is 12 Kilobytes
+    (\Const{0x3000} in hexadecimal) thus, once
+    the address of the installed \emph{device tree} is known, its
+    \StdName{CRC} can be obtained as follows:
+\begin{lstlisting}
+    => crc fe300000 0x3000
+    CRC32 for fe300000 ... fe302fff ==> cb588b5e
+\end{lstlisting}
+
+    Now we can use a checksum program (like \Command{jacksum}) to
+    obtain the \StdName{CRC-32} of all images:
+\begin{lstlisting}
+    host$ for i in *dtb; do jacksum -a crc32 $i; done
+    2678061774	12288	mpc8313erdb.dtb
+    1614041190	12288	mpc8313erdb_usbgadget_external_phy.dtb
+    161761636	12288	mpc8313erdb_usbgadget_internal_phy.dtb
+    2371930621	12288	mpc8313erdb_usbhost_external_phy.dtb
+    3656584488	12288	mpc8313erdb_usbotg_external_phy.dtb
+\end{lstlisting}
+    If we convert in decimal the value extracted from \uBoot\ we
+    get:
+\begin{lstlisting}
+    host$ echo 'print 0x9f9fface, "\n"' | perl
+    2678061774
+\end{lstlisting}
+    which corresponds to the \FileName{mpc8313erdb.dtb} file.
+
+    This trick can be used to check consistency of uploaded
+    images.
+

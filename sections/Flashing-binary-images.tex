@@ -1,0 +1,100 @@
+The \uBoot\ software supports the network booting through \BootP\ + \TFTP.
+This simplifies a lot the transfer of binary images: just setup servers
+and ask for data from the board!
+
+\subsection{ Network setup with \uBoot }
+
+    The board is provided with two network interfaces: the
+    \TechName{Vitesse VSC7385} and the \TechName{Marvell}. In
+    \uBoot\ those are respectively enumerated as \Const{TSEC0} and
+    \Const{TSEC1}, and only one of them at a time can be
+    activated. This setting is bound by the environment variable
+    named \Const{ethact}\footnote{
+        Thanks to Lorenzo and Mirko for this information!
+    }.
+
+    In order to select the \TechName{Marvell} card the following
+    command is needed:
+\begin{lstlisting}
+    => setenv ethact TSEC1
+\end{lstlisting}
+
+    \Note{Variable reset problem}{
+        As specified by the \uBoot\ manual, the internal
+        \uBoot\ environment can be saved by using the
+        \Command{saveenv} command. This works correctly for any
+        variable including \Const{ethact}, but for some reason
+        the active NIC gets re-assigned when \uBoot\ starts or
+        gets reset.
+
+        This is not a problem if you plan to use \BootP\ for
+        booting the system.
+    }
+
+    During my experiments I noticed that \uBoot\ allows to set an
+    IP address for the board, thus I skipped the configuration of
+    the \BootP\ daemon and I relied on the default address of the
+    NIC.
+
+    The status of the network connection can be verified by using
+    the simple version of the \emph{ping} program embedded by
+    \uBoot: this works from the board to a host on the network,
+    while the vice-versa won't work. By running a \emph{sniffer}
+    I discovered that \uBoot\ don't answer to \emph{arp
+    requests}, and this must be taken in account in order to
+    achieve a network communication: the MAC address of the board
+    must be specified on the host running the \TFTP\ server. This
+    can be done by using the \Command{arp} program in this way:
+\begin{lstlisting}[language=bash]
+    arp -s 192.168.1.100 00:12:34:56:78
+\end{lstlisting}
+
+    \Note{How to deal with \TechName{network-manager}}{
+        The \TechName{network-manager} program, very common on
+        recent \GNULinux\ distributions, deactivates Ethernet
+        interfaces on which there's no carrier. This can be
+        obnoxious, since the \emph{ARP cache} will be cleaned each
+        time you reset the board. You may want to temporarily
+        deactivate \TechName{network-manager} or manually set the
+        \emph{ARP} address when needed.
+    }
+
+\subsection{ \TFTP\ repository }
+
+    The \TFTPd\ daemon is packaged for \emph{Debian}-like
+    distributions as \PackageName{tftpd} and \emph{Red-Hat}-like
+    distributions as \PackageName{tftp-server}. In both cases it
+    runs against the \TechName{xinetd} server\footnote{
+        \url{http://xinetd.org}
+    }, thus the configuration must be entered into the
+    \FileName{/etc/xinetd.d} directory. This is the content of my
+    \FileName{/etc/xinetd.d/tftp} file:
+
+\begin{lstlisting}
+    service tftp
+    {
+        id = tftp-dgram
+        type = UNLISTED
+        disable = no
+        socket_type = dgram
+        protocol = udp
+        wait = yes
+        server = /usr/sbin/in.tftpd
+        server_args = -s /opt/tftpd
+        per_source = 1
+        user = root
+        port = 69
+    }
+\end{lstlisting}
+
+    where \FileName{/opt/tftpd} is the directory where I stored
+    all the binary objects mentioned in
+    Section~\ref{sec:GetTools}.
+
+    Once the server has been configured, the \TechName{xinetd}
+    daemon must be restarted in order for the modifications to
+    take place.
+
+\subsection{ Installing binary objects }
+
+

@@ -1,0 +1,31 @@
+As mentioned in Section~\ref{sec:Overview} useful tools and configurations
+are provided in the CD-ROM:
+\begin{itemize}
+\item   A fully-fledged cross-compiler for the \PPC\ architecture
+        can be found in the \FileName{pkgs} directory:
+        \FileName{mtwk-lnx-powerpc-gcc-3.4.3-glibc-2.3.3-0.28-1.i686.rpm};
+
+\item   The \FileName{images} directory contains all the binary
+        objects to be loaded on the \emph{flash memory} of the
+        board:
+        \begin{itemize}
+        \item   A pre-compiled binary image of the \emph{kernel}:
+                \FileName{uimage};
+        \item   An image of the \emph{\BusyBox-based filesystem}:
+                \FileName{rootfs.ext2.gz.uboot};
+        \item   The \emph{device tree blob}:
+                \FileName{mpc8313erdb.dtb}
+        \end{itemize}
+\end{itemize}
+
+The configurations files they can be found inside the
+\FileName{ltib.tar.gz} tarball, in a directory named \FileName{config}.
+They can be used in case of partial or total rebuilding of the system.
+
+\Warn{}{
+    If an upgrade to newer versions of the software is required, please
+    mind the fact that old configuration files are usually not suitable
+    for new versions of the software
+}
+
+
