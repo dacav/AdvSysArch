@@ -1,6 +1,7 @@
 As mentioned in Section~\ref{sec:Overview} useful tools and configurations
 are provided in the CD-ROM:
 \begin{itemize}
+
 \item   A fully-fledged cross-compiler for the \PPC\ architecture
         can be found in the \FileName{pkgs} directory:
         \FileName{mtwk-lnx-powerpc-gcc-3.4.3-glibc-2.3.3-0.28-1.i686.rpm};
@@ -16,16 +17,71 @@ are provided in the CD-ROM:
         \item   The \emph{device tree blob}:
                 \FileName{mpc8313erdb.dtb}
         \end{itemize}
+        These three items are stored by default inside the board flash
+        memory (Subsection~\ref{sub:ImagesChecking} explains the technique
+        I used to check this).
+
 \end{itemize}
 
 The configurations files they can be found inside the
 \FileName{ltib.tar.gz} tarball, in a directory named \FileName{config}.
 They can be used in case of partial or total rebuilding of the system.
 
-\Warn{}{
+\Warn{about configurations}{
     If an upgrade to newer versions of the software is required, please
     mind the fact that old configuration files are usually not suitable
     for new versions of the software
 }
 
+\subsection{ The cross-compiler }
+
+    The cross-compiler is packaged for a \RedHat\ system, and the
+    \StdName{rpm} file uses \FileName{/opt/mtwk} as installation
+    directory. On a \Debian\ system you may want to convert it with
+    the \TechName{alien} tool into a \StdName{deb} package (it seems also
+    safe to install it directly).
+
+    \Warn{Compiler issues?}{
+        Before discovering the available \Linux\ kernel image I tried to
+        recompile it with the given cross-compiler and kernel
+        configuration.  The process gave me some troubles due to a
+        ``\emph{internal compiler error}''. This has been verified with
+        the 2.6.20 (the version I've found pre-installed on the board).
+    }
+
+\subsection{ Other useful tools } \label{sub:OtherTools}
+
+    \begin{itemize}
+
+    \item  The \mkimage\ tool is needed to build binary images:
+
+        \begin{itemize}
+        \item   Available for \Debian-like distributions in the
+                \PackageName{u-boot-tools} package;
+        \item   Available for \RedHat-like distributions in the
+                \PackageName{???} package.
+        \end{itemize}
+
+    \item   The communication via serial port can be achieved by using
+            \Minicom.
+
+        \begin{itemize}
+        \item   Available for \Debian-like distributions as
+                \PackageName{minicom};
+        \item   Available for \RedHat-like distributions as
+                \PackageName{???}.
+        \end{itemize}
+
+    \item   \BootP\ and \TFTP\ daemons are needed, and many solutions are
+            available for both of them.
+            \begin{itemize}
+            \item   I used the server packaged as \PackageName{tftpd}
+                    under \Debian-like distributions and \PackageName{???}
+                    under \RedHat-like distributions;
+            \item   I used the server packaged as \PackageName{bootp}
+                    under \Debian-like distributions and \PackageName{???}
+                    under \RedHat-like distributions;
+            \end{itemize}
+
+    \end{itemize}
 

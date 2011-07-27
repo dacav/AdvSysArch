@@ -1,0 +1,47 @@
+\newcommand{\MsgBox}[3]{
+    %\shadowbox{ %
+    \fbox{ %
+        \centering %
+        \begin{minipage}{\textwidth}
+        \vspace{0.3em}
+        \underline{\textbf{{#1}}: {#2}}
+        \vspace{1em}
+        \\
+        {#3}
+        \vspace{0.3em}
+        \end{minipage} %
+    }
+}
+
+\newcommand{\Warn}[2]{\MsgBox{Warning}{#1}{#2}}
+\newcommand{\Note}[2]{\MsgBox{Note}{#1}{#2}}
+\newcommand{\EpicHack}[2]{\MsgBox{Epic Hack}{#1}{#2}}
+
+\newcommand{\FileName}[1]{\textbf{\textsl{\textsf{{#1}}}}}
+\newcommand{\PackageName}[1]{\textbf{\textsl{\textsf{{#1}}}}}
+\newcommand{\Const}[1]{{{\tt {#1}}}}
+\newcommand{\TechName}[1]{\textsf{{#1}}}
+\newcommand{\ToolName}[1]{\emph{{#1}}}
+\newcommand{\StdName}[1]{\emph{{#1}}}
+\newcommand{\Command}[1]{{\tt {#1}}}
+
+\newcommand{\MyBoard}{\TechName{Freescale MPC8313E-RDB}}
+\newcommand{\PPC}{\TechName{Power-PC}}
+\newcommand{\uBoot}{\TechName{U-Boot}}
+\newcommand{\Linux}{\TechName{Linux}}
+\newcommand{\GNULinux}{\TechName{GNU}/\Linux}
+\newcommand{\BusyBox}{\TechName{Busybox}}
+\newcommand{\mkimage}{\TechName{mkimage}}
+\newcommand{\Minicom}{\TechName{Minicom}}
+\newcommand{\LTIB}{\TechName{LTIB}}
+\newcommand{\NetCat}{\TechName{Netcat}}
+\newcommand{\InitRamFs}{\ToolName{initramfs}}
+\newcommand{\TFTPd}{\ToolName{TFTPd}}
+\newcommand{\TFTP}{\StdName{TFTP}}
+\newcommand{\PTPd}{\ToolName{PTPd}}
+\newcommand{\PTP}{\StdName{PTP}}
+\newcommand{\BootP}{\StdName{BootP}}
+\newcommand{\ARP}{\StdName{ARP}}
+
+\newcommand{\Debian}{\TechName{Debian}}
+\newcommand{\RedHat}{\TechName{Red-hat}}

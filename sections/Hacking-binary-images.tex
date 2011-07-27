@@ -1,0 +1,95 @@
+An Embedded \Linux\ environment needs three main items: \emph{kernel}, a
+\emph{filesystem image} and a \emph{device tree}. Those three, as
+explained in Section~\ref{sec:GetTools}, are provided by
+\TechName{Freescale}.
+
+If we want to permanently install programs on the board we basically need
+to modify the filesystem, while the other two elements can be used as they
+are (as long as the functionality we need aren't placed in kernel space).
+
+\subsection{The filesystem image}
+
+    The filesystem is named \FileName{rootfs.ext2.gz.uboot}, thus what I
+    expected is just a \emph{gzipped} \StdName{ext2} filesystem enveloped
+    into some \uBoot\ wrapper:
+
+\begin{verbatim}
+    host$ file rootfs.ext2.gz.uboot
+    rootfs.ext2.gz.uboot: u-boot legacy uImage, uboot ext2 ramdisk rootfs,
+    Linux/PowerPC, RAMDisk Image (gzip), 2831355 bytes, Fri Aug 24
+    17:01:41 2007, Load Address: 0x00000000, Entry Point: 0x00000000,
+    Header CRC: 0x9B7D6AEB, Data CRC: 0x14B719EB
+\end{verbatim}
+
+    Searching on the web I've found out that this kind of image is
+    produced by the \mkimage\ tool, which envelops stuff inside a 64 bytes
+    header. Not a big deal for our friend \Command{dd}, right?
+
+    So this is an example shell session you can use to mount the
+    filesystem on some directory:
+\begin{verbatim}
+    host$ dd if=rootfs.ext2.gz.uboot bs=64 skip=1 of=rootfs.ext2.gz
+    44239+1 records in
+    44239+1 records out
+    2831355 bytes (2.8 MB) copied, 0.0881506 s, 32.1 MB/s
+    host$ gunzip rootfs.ext2.gz
+    host$ mkdir userland
+    host$ su -c 'mount -t ext2 -o rw,loop rootfs.ext2 userland'
+    Password:
+    host$ ls userland/
+    bin/  etc/   lib/      lost+found/  opt/   root/  sys/  usr/
+    dev/  home/  linuxrc@  mnt/         proc/  sbin/  tmp/  var/
+\end{verbatim}
+    Bingo!
+
+    \Warn{Using \Command{su} or \Command{sudo}}{
+        Depending on your distribution's policy, the execution of a
+        command with \emph{root} privileges could require the \Command{su}
+        or the \Command{sudo} command. If you are on a \TechName{Ubuntu}
+        system you are likely to be using \Command{sudo} for the
+        \Command{mount} command:
+        \begin{quote}\texttt{
+            host\$ sudo mount -t ext2 -o rw,loop rootfs.ext2 userland
+        }
+        \end{quote}
+    }
+
+    Now we need to install some program, say the \emph{hello world}
+    program we compiled in Section~\ref{sec:Upload} inside the image.
+
+\begin{verbatim}
+    host$ cp /tmp/hello userland/bin
+\end{verbatim}
+
+    At this point we need a little magic: during bootstrap the \Linux\
+    kernel relies on a temporary root filesystem, which usually contains
+    the modules to be loaded before starting the actual operating system.
+    When the modules are loaded the \Command{pivot\_root} command is used
+    to swap the temporary root with the actual root.
+
+    Many different solutions are supported here, but the
+    \StdName{initramfs} is definitely the most easy and immediate: it's
+    shaped as a \StdName{gzipped cpio} archive. More information on this
+    topic can be easily found on the web.
+
+    After the bootstrap, the \Linux\ kernel will try to execute the file
+    named \FileName{/init}, so what we want to do is skip the root
+    pivoting and remain in the \StdName{initramfs} environment. If we want
+    to automatically execute the \emph{hello world} program at bootstrap
+    we just need something like that:
+
+\begin{verbatim}
+    host$ cat > userland/init << EOF
+    > #!/bin/ash
+    >
+    > echo 'Launching ptp'
+    > /sbin/ptpd2
+    >
+    > mount -t proc /proc proc
+    > mount -t sysfs none /sys
+    >
+    > echo 'Ready to go! Welcome!'
+    > /bin/ash --login
+\end{verbatim}
+
+

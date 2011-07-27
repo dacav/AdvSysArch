@@ -1,0 +1,169 @@
+The \uBoot\ software supports the network booting through \BootP\ + \TFTP.
+This functionality is extremely useful, since it allows to transfer a
+binary object, like a \emph{filesystem image} or a \emph{kernel}, from a
+server to the board.
+
+The default system, installed by \TechName{Freescale}, defines a boot
+procedure which loads an embedded operating system from the flash memory.
+I modified such setting, and now it behaves as follows:
+
+\begin{enumerate}
+
+\item   After a basic bootstrap the board queries the network with the
+        \StdName{dhcp};
+
+\item   The host answers providing:
+    \begin{itemize}
+    \item   An IP address;
+    \item   The name of a \uBoot\ script to be loaded and executed.
+    \end{itemize}
+
+\item   Basing on the script two different things can happen:
+    \begin{itemize}
+    \item   The default system booting procedure is activated
+            (\emph{normal booting});
+    \item   A new \emph{initramfs} is loaded into memory and copied inside
+            the flash memory, replacing the previous image of the
+            filesystem (\emph{update booting}).
+    \end{itemize}
+    In both cases the assigned IP number is propagated also to the \Linux\
+    system trought the kernel's command line options.
+
+\end{enumerate}
+
+This procedure particularly well suited for a network environment: by
+modifying the settings of the \BootP\ + \TFTP\ server it's possible to
+redefine the behavior of the deployed boards in a centralized way.
+
+The next paragraphs will describe in detail how the system works and gets
+built.
+
+\subsection{ Network setup }
+
+    The board is provided with two network interfaces: the
+    \TechName{Vitesse VSC7385} and the \TechName{Marvell}. In
+    \uBoot\ those are respectively enumerated as \Const{TSEC0} and
+    \Const{TSEC1}, and only one of them at a time can be
+    activated. This setting is bound by the environment variable
+    named \Const{ethact}\footnote{
+        Thanks to Lorenzo and Mirko for this information!
+    }.
+
+    In order to select the \TechName{Marvell} card the following
+    command is needed:
+\begin{lstlisting}
+    => setenv ethact TSEC1
+\end{lstlisting}
+
+    \Warn{Variable reset problem}{
+        As specified by the \uBoot\ manual, the internal
+        \uBoot\ environment can be saved by using the
+        \Command{saveenv} command. This works correctly for any
+        variable including \Const{ethact}, but for some reason
+        the active NIC gets re-assigned when \uBoot\ starts or
+        gets reset.
+    }
+
+    During my experiments I noticed that \uBoot\ allows to both set
+    manually an IP address for the board or use a \BootP\ server in order
+    to make the procedure automated. The status of the network connection
+    can be verified by using a simple version of the \emph{ping} program
+    embedded into \uBoot.
+
+    By running a \emph{sniffer} I discovered that \uBoot\ doesn't answer
+    to \emph{arp requests}: the MAC address must be setted manually on the
+    host. This problem doesn't show up if a \BootP\ server is used.
+
+    \Note{How to deal with \TechName{network-manager}}{
+        The \TechName{network-manager} program, very common on
+        recent \GNULinux\ distributions, deactivates Ethernet
+        interfaces on which there's no carrier. This can be
+        obnoxious, since the \emph{ARP cache} will be cleaned each
+        time you reset the board. You may want to temporarily
+        deactivate \TechName{network-manager} or manually set the
+        \emph{ARP} address when needed.
+    }
+
+\subsection{ \BootP\ and \TFTPd } \label{sub:Xinetd}
+
+    Many tutorials on the Internet cover in detail the setup the needed
+    for both daemons. Here I'll just show some of my configuration files
+    and explain how I'm using them.
+
+    Both the choosen versions of the packages (see
+    Subsection~\ref{sub:OtherTools}) rely on \TechName{Xinetd}\footnote{
+        \url{http://xinetd.org}
+    }, a secure replacement for the \TechName{Inet} daemon.
+
+    \subsubsection{\TFTPd}
+
+\begin{lstlisting}
+    host$ more /etc/xinetd.d/tftp 
+    service tftp
+    {
+        id = tftp-dgram
+        type = UNLISTED
+        disable = no
+        socket_type = dgram
+        protocol = udp
+        wait = yes
+        server = /usr/sbin/in.tftpd
+        server_args = -s /opt/tftpd
+        per_source = 1
+        user = root
+        port = 69
+    }
+\end{lstlisting}
+
+        My own setting uses the directory \FileName{/opt/tftpd} has been
+        chosen as root for the server. All the binaries mentioned in
+        Section~\ref{sec:GetTools} are stored there.
+
+    \subsubsection{\BootP}
+
+\begin{lstlisting}
+    host$ more /etc/xinetd.d/bootp 
+    service bootps
+    {
+        id = bootp-dgram
+        type = UNLISTED
+        disable = no
+        socket_type = dgram
+        protocol = udp
+        wait = yes
+        user = root
+        server = /usr/sbin/bootpd
+        per_source = 1
+        port = 67
+    }
+\end{lstlisting}
+
+        The \BootP\ daemon requires a further configuration effort: the
+        \FileName{/etc/bootptab} file must also contain the IP address and
+        other booting information. Again, here I'll just show my
+        configuration, while further details on how such configuration
+        behaves are given later in this document:
+
+\begin{lstlisting}
+    host$ more /etc/boottab
+    .default:\
+        :sm=255.255.255.0:\
+        :sa=192.168.1.1:\
+        :gw=192.168.1.1
+
+    .noupdate:\
+        :tc=.default:\
+        :bf=null:\
+        :bf=bootseq_run.img
+
+    .update:\
+        :tc=.default:\
+        :bf=bootseq_run.img
+
+    board:\
+        :ht=ether:\
+        :ha=00fa10fafa10:\
+        :tc=.update:\
+        :ip=192.168.1.200
+\end{lstlisting}
+
