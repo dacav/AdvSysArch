@@ -13,13 +13,13 @@ are (as long as the functionality we need aren't placed in kernel space).
     expected is just a \emph{gzipped} \StdName{ext2} filesystem enveloped
     into some \uBoot\ wrapper:
 
-\begin{verbatim}
+\begin{lstlisting}
     host$ file rootfs.ext2.gz.uboot
     rootfs.ext2.gz.uboot: u-boot legacy uImage, uboot ext2 ramdisk rootfs,
     Linux/PowerPC, RAMDisk Image (gzip), 2831355 bytes, Fri Aug 24
     17:01:41 2007, Load Address: 0x00000000, Entry Point: 0x00000000,
     Header CRC: 0x9B7D6AEB, Data CRC: 0x14B719EB
-\end{verbatim}
+\end{lstlisting}
 
     Searching on the web I've found out that this kind of image is
     produced by the \mkimage\ tool, which envelops stuff inside a 64 bytes
@@ -27,7 +27,7 @@ are (as long as the functionality we need aren't placed in kernel space).
 
     So this is an example shell session you can use to mount the
     filesystem on some directory:
-\begin{verbatim}
+\begin{lstlisting}
     host$ dd if=rootfs.ext2.gz.uboot bs=64 skip=1 of=rootfs.ext2.gz
     44239+1 records in
     44239+1 records out
@@ -39,7 +39,7 @@ are (as long as the functionality we need aren't placed in kernel space).
     host$ ls userland/
     bin/  etc/   lib/      lost+found/  opt/   root/  sys/  usr/
     dev/  home/  linuxrc@  mnt/         proc/  sbin/  tmp/  var/
-\end{verbatim}
+\end{lstlisting}
     Bingo!
 
     \Warn{Using \Command{su} or \Command{sudo}}{
@@ -57,9 +57,11 @@ are (as long as the functionality we need aren't placed in kernel space).
     Now we need to install some program, say the \emph{hello world}
     program we compiled in Section~\ref{sec:Upload} inside the image.
 
-\begin{verbatim}
+\begin{lstlisting}
     host$ cp /tmp/hello userland/bin
-\end{verbatim}
+\end{lstlisting}
+
+\subsection{The startup script}
 
     At this point we need a little magic: during bootstrap the \Linux\
     kernel relies on a temporary root filesystem, which usually contains
@@ -78,18 +80,36 @@ are (as long as the functionality we need aren't placed in kernel space).
     to automatically execute the \emph{hello world} program at bootstrap
     we just need something like that:
 
-\begin{verbatim}
+\begin{lstlisting}
     host$ cat > userland/init << EOF
     > #!/bin/ash
-    >
-    > echo 'Launching ptp'
-    > /sbin/ptpd2
     >
     > mount -t proc /proc proc
     > mount -t sysfs none /sys
     >
+    > hello
+    >
     > echo 'Ready to go! Welcome!'
     > /bin/ash --login
-\end{verbatim}
+    > EOF
+\end{lstlisting}
 
+    Now we can build an \StdName{initramfs} image starting from the
+    modified filesystem by using the \Command{cpio} command, and
+    subsequently envelop it into the wrapper for \uBoot\ by using mkimage
+
+\begin{lstlisting}
+    host$ cd userland
+    host$ find . | cpio -o -H newc | gzip --best > ../initramfs.img
+    host$ cd ..
+    host$ mkimage -A powerpc -O Linux -T ramdisk -C gzip -n Sylvie -a 0 -e
+          0 -d initramfs.img rootfs.hello.uboot
+
+    Image Name:   Sylvie
+    Created:      Wed Jul 27 17:31:47 2011
+    Image Type:   PowerPC Linux RAMDisk Image (gzip compressed)
+    Data Size:    2800916 Bytes = 2735.27 kB = 2.67 MB
+    Load Address: 00000000
+    Entry Point:  00000000
+\end{lstlisting}
 
