@@ -59,28 +59,23 @@ They can be used in case of partial or total rebuilding of the system.
         \item   Available for \Debian-like distributions in the
                 \PackageName{u-boot-tools} package;
         \item   Available for \RedHat-like distributions in the
-                \PackageName{???} package.
+                \PackageName{uboot-tools} package (\TechName{EPEL}
+                repositories).
         \end{itemize}
 
     \item   The communication via serial port can be achieved by using
-            \Minicom.
-
-        \begin{itemize}
-        \item   Available for \Debian-like distributions as
-                \PackageName{minicom};
-        \item   Available for \RedHat-like distributions as
-                \PackageName{???}.
-        \end{itemize}
+            \Minicom, available for both \Debian-like and \RedHat-like
+            distributions as \PackageName{minicom};
 
     \item   \BootP\ and \TFTP\ daemons are needed, and many solutions are
             available for both of them.
             \begin{itemize}
             \item   I used the server packaged as \PackageName{tftpd}
-                    under \Debian-like distributions and \PackageName{???}
-                    under \RedHat-like distributions;
+                    under \Debian-like distributions and
+                    \PackageName{tftp-server} under \RedHat-like
+                    distributions;
             \item   I used the server packaged as \PackageName{bootp}
-                    under \Debian-like distributions and \PackageName{???}
-                    under \RedHat-like distributions;
+                    under \Debian-like distributions.
             \end{itemize}
 
     \end{itemize}
