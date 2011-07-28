@@ -1,0 +1,36 @@
+bootcmd=run run_vscld1; run ramargs addtty;bootm fe100000 fe300000 fe700000
+bootdelay=10
+baudrate=115200
+loads_echo=1
+hostname=mpc8313erdb
+load_uboot=tftp 100000 /tftpboot/u-boot.bin
+update_uboot=protect off fe000000 fe06ffff; era fe000000 fe06ffff; cp.b 100000 fe000000 $filesize
+burn_uboot=run load_uboot;run update_uboot
+netdev=eth1
+nfsargs=setenv bootargs root=/dev/nfs rw nfsroot=${serverip}:${rootpath}
+ramargs=setenv bootargs root=/dev/ram rw
+addip=setenv bootargs ${bootargs} ip=${ipaddr}:${serverip}:${gatewayip}:${netmask}:${hostname}:${netdev}:off panic=1
+addtty=setenv bootargs ${bootargs} console=ttyS0,${baudrate}
+load_vscfw=tftp 100000 /tftpboot/vsc2bin
+update_vscfw=protect off fe7fe000 fe7fffff;erase fe7fe000 fe7fffff; cp.b 100000 fe7fe000 $filesize
+burn_vscfw=run load_vscfw; run update_vscfw
+run_vscld=tftp 40000 /tftpboot/vsc7385_load.bin;go 40004 
+run_vscld1=cp.b fe710000 40000 11000; go 40004 
+ethaddr=00:fa:fa:fa:fe:fe
+eth1addr=00:fa:10:fa:fa:10
+mtdids=nor0=nor,nand0=nand
+rootpath=/tftpboot/
+loadaddr=200000
+filesize=457e0f
+fileaddr=200000
+fixes=setenv ethact TSEC1
+stdin=serial
+stdout=serial
+stderr=serial
+ethact=TSEC1
+bootfile=/null
+gatewayip=192.168.1.1
+netmask=255.255.255.0
+ipaddr=192.168.1.200
+serverip=192.168.1.1
+
