@@ -1,5 +1,8 @@
+After a proper testing phase one may want to deploy the application in a
+stable environment, possibly with some automatisms.
+
 An Embedded \Linux\ environment needs three main items: \emph{kernel}, a
-\emph{filesystem image} and a \emph{device tree}. Those three, as
+\emph{filesystem image} and a \emph{device tree}. Those three guys, as
 explained in Section~\ref{sec:GetTools}, are provided by
 \TechName{Freescale}.
 
@@ -45,9 +48,9 @@ are (as long as the functionality we need aren't placed in kernel space).
     \Warn{Using \Command{su} or \Command{sudo}}{
         Depending on your distribution's policy, the execution of a
         command with \emph{root} privileges could require the \Command{su}
-        or the \Command{sudo} command. If you are on a \TechName{Ubuntu}
-        system you are likely to be using \Command{sudo} for the
-        \Command{mount} command:
+        or the \Command{sudo} command. For instance, if you are on a
+        \TechName{Ubuntu} system you are likely to be using \Command{sudo}
+        for the \Command{mount} command:
         \begin{quote}\texttt{
             host\$ sudo mount -t ext2 -o rw,loop rootfs.ext2 userland
         }
@@ -55,7 +58,8 @@ are (as long as the functionality we need aren't placed in kernel space).
     }
 
     Now we need to install some program, say the \emph{hello world}
-    program we compiled in Section~\ref{sec:Upload} inside the image.
+    program we compiled in Section~\ref{sec:Upload}, inside the image. We
+    just need to copy it:
 
 \begin{lstlisting}
     host$ cp /tmp/hello userland/bin
@@ -112,4 +116,8 @@ are (as long as the functionality we need aren't placed in kernel space).
     Load Address: 00000000
     Entry Point:  00000000
 \end{lstlisting}
+
+    Our image, the file \FileName{rootfs.hello.uboot} is now ready to be
+    loaded on the board. This aspects are covered in
+    Section~\ref{sec:UploadImages}.
 

@@ -21,7 +21,7 @@ The very first test I ran was trying to execute a simple
     powerpc-linux-gcc   hello.o   -o hello
 \end{lstlisting}
 
-    \item   Feed \NetCat\ with the executable:
+    \item   Feed a \NetCat\ in server mode with the executable:
 
 \begin{lstlisting}
     host$ nc -l 9000 < hello
@@ -39,20 +39,21 @@ The very first test I ran was trying to execute a simple
 \end{enumerate}
 
 \Warn{Interrupt from keyboard}{
-    The installed \BusyBox\ + \Linux\ system doesn't support the
-    termination from keyboard (\Command{CTRL+C}); this is probably due
-    to the serial interface. It's a good practice to launch programs like
-    \NetCat, which waits for some event, as \emph{background process}.
+    The installed \BusyBox\ + \Linux\ system may not support the
+    \emph{termination from keyboard} sequence (\Command{CTRL+C}); this is
+    probably due to the serial interface. It's a good practice to launch
+    programs like \NetCat, which waits for some event, as \emph{background
+    process}.
 
     Also if you plan to test the network with \Command{ping}, for the same
     reason I suggest to use the \Command{-c} option in order to get a
     bounded execution.
 }
 
-This technique is a very simple way to run a program on the board, but
+This technique is a very simple way of running a program on the board, but
 since the filesystem works in RAM, the program will be lost at the first
 board reboot. On the other hand this doesn't require to manipulate the
-system image stored in the flash memory.
+system image stored in the flash memory, so it's very quick.
 
 By using this trick you should be able to achieve software testing in a
 convenient way, while the flashing operation can be delayed to the

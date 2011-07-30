@@ -13,7 +13,7 @@ life beyond a certain threshold.  This is true especially when the
 software requires to run the \emph{rpm} command with \emph{root}
 privileges on my \Debian-like OS!
 
-I ran the program into a \TechName{CentOS}-based \emph{chroot jail}, but I
+I ran the program into a \TechName{CentOS} \emph{chroot jail}, but I
 still got confused on what the software is supposed to do. Instead of
 trying understanding it I preferred to do some retro-engineering of the
 system and go for the \emph{bare-metal} approach I'm going to describe in
@@ -21,7 +21,7 @@ this document.
 
 The idea is simple: with both \uBoot\ and \Linux\ the Ethernet interfaces
 can be enabled, and this can be exploited to conveniently load programs on
-the board. The development process can be achieved with the classical
+the board. The development process can be achieved with the classic
 \emph{editor + compiler} combo, which in my opinion is definitely the
 simplest way of getting stuff done.
 
@@ -36,19 +36,18 @@ More on that in the next section.
     \item   The \MyBoard\ will be simply referred as
             ``\emph{board}'';
 
-    \item   The normal computer on which compilations and
-            configurations are achieved is referred as
-            ``\emph{host}'';
+    \item   The personal computer or laptop on which compilations and
+            configurations are achieved is referred as ``\emph{host}'';
 
     \item   Listings to be executed on the host will have the
-            ``\lstinline{host\$}'' prompt:
+            ``\lstinline{host$}'' prompt:
 \begin{lstlisting}
     host$ echo Hello
 \end{lstlisting}
 
     \item   Listings to be executed on the board with the
             \BusyBox\ + \Linux\ environment will have the
-            ``\lstinline{board\$}'' prompt:
+            ``\lstinline{board$}'' prompt:
 \begin{lstlisting}
     board$ echo Hello
 \end{lstlisting}

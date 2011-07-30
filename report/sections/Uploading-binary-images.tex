@@ -35,8 +35,9 @@ This procedure particularly well suited for a network environment: by
 modifying the settings of the \BootP\ + \TFTP\ server it's possible to
 redefine the behavior of the deployed boards in a centralized way.
 
-The next paragraphs will describe in detail how the system works and gets
-built.
+Many tutorials on the Internet cover in detail how to properly configure
+the daemons. This section contains the dump of my configuration files and
+an explanation on how I implemented my idea.
 
 \subsection{ Network setup }
 
@@ -45,9 +46,7 @@ built.
     \uBoot\ those are respectively enumerated as \Const{TSEC0} and
     \Const{TSEC1}, and only one of them at a time can be
     activated. This setting is bound by the environment variable
-    named \Const{ethact}\footnote{
-        Thanks to Lorenzo and Mirko for this information!
-    }.
+    named \Const{ethact}.
 
     In order to select the \TechName{Marvell} card the following
     command is needed:
@@ -84,11 +83,7 @@ built.
         \emph{ARP} address when needed.
     }
 
-\subsection{ \BootP\ and \TFTPd } \label{sub:Xinetd}
-
-    Many tutorials on the Internet cover in detail the setup the needed
-    for both daemons. Here I'll just show some of my configuration files
-    and explain how I'm using them.
+\subsection{ \BootPd\ and \TFTPd } \label{sub:Xinetd}
 
     Both the choosen versions of the packages (see
     Subsection~\ref{sub:OtherTools}) rely on \TechName{Xinetd}\footnote{
@@ -97,8 +92,12 @@ built.
 
     \subsubsection{\TFTPd}
 
+        The \TFTPd\ configuration is trivial as it should be. We just need
+        to tell \TechName{Xinetd} how to start the daemon and we are
+        done:
+
 \begin{lstlisting}
-    host$ more /etc/xinetd.d/tftp 
+    host$ more /etc/xinetd.d/tftp
     service tftp
     {
         id = tftp-dgram
@@ -115,14 +114,26 @@ built.
     }
 \end{lstlisting}
 
-        My own setting uses the directory \FileName{/opt/tftpd} has been
-        chosen as root for the server. All the binaries mentioned in
-        Section~\ref{sec:GetTools} are stored there.
+        Some comments:
+        \begin{itemize}
+        \item   My own setting uses the directory \FileName{/opt/tftpd}
+                has been chosen as root for the server. All the binaries
+                mentioned in Section~\ref{sec:GetTools} are stored there;
+        \item   The name of the program to be executed is
+                \Command{in.tftpd};
+        \item   The protocol works on UDP port 69 (according to the
+                well-known ports, see \FileName{/etc/services}).
+        \end{itemize}
 
-    \subsubsection{\BootP}
+    \subsubsection{\BootPd}
 
+        The configuration of the \BootPd\ daemon is mainly splitted among
+        \TechName{Xinetd} settings and \BootPd's own configuration file:
+        \FileName{/etc/bootptab}.
+
+        The former is pretty general, as for \TFTPd:
 \begin{lstlisting}
-    host$ more /etc/xinetd.d/bootp 
+    host$ more /etc/xinetd.d/bootp
     service bootps
     {
         id = bootp-dgram
@@ -138,12 +149,7 @@ built.
     }
 \end{lstlisting}
 
-        The \BootP\ daemon requires a further configuration effort: the
-        \FileName{/etc/bootptab} file must also contain the IP address and
-        other booting information. Again, here I'll just show my
-        configuration, while further details on how such configuration
-        behaves are given later in this document:
-
+        My \FileName{/etc/bootptab} is the following:
 \begin{lstlisting}
     host$ more /etc/boottab
     .default:\
@@ -153,12 +159,11 @@ built.
 
     .noupdate:\
         :tc=.default:\
-        :bf=null:\
         :bf=bootseq_run.img
 
     .update:\
         :tc=.default:\
-        :bf=bootseq_run.img
+        :bf=bootseq_update.img
 
     board:\
         :ht=ether:\
@@ -166,4 +171,32 @@ built.
         :tc=.update:\
         :ip=192.168.1.200
 \end{lstlisting}
+
+        Some comments:
+        \begin{itemize}
+
+        \item   The \Const{.default} label identifies general settings of
+                the network;
+
+        \item   The \Const{tc} keyword indicates inheritance of the
+                settings from another label;
+
+        \item   The two behaviors described at the very beginning of this
+                section are managed trough the \Const{.noupdate} and the
+                \Const{.update} labels:
+
+            \begin{enumerate}
+            \item   The \Const{.noupdate} label defines as boot file the
+                    script which simply runs the system as it is;
+            \item   The \Const{.update} label defines as boot file the
+                    script which first updates the system and then runs
+                    it.
+            \end{enumerate}
+
+        \item   Finally, for each board (in my case just one of
+                them, I named it just ``\emph{board}'') we can define the
+                IP address and the kind of operation the board will do on
+                bootstrap (in this case the system will be updated).
+
+        \end{itemize}
 
