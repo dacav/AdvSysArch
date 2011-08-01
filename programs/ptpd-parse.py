@@ -1,28 +1,110 @@
 #!/usr/bin/env python
+#
+# TODO: add GPL
+#
 
 from __future__ import print_function, division
 import sys
 import itertools
 import dateutil.parser as parsedate
 import csv
-import pylab
+from optparse import OptionParser
+from collections import defaultdict
 
 try: range = xrange
 except: pass
 
-TIME_FORMAT = ["%Y-%m-%d %H:%M:%S", "%m/%d/%Y %H:%M:%S"]
+# Hi there, collegue!
+#
+# I tried to produce this software in a very straightforward way, so it
+# shouldn't be that difficult to modify. I'm addicted to python
+# generators, so you have better to know what they are if you want to
+# modify the core of this script.
+#
+#                                                            Happy hacking
 
-class PTPStat :
+# ----------------------------------------------------------------------
+# Constants
+# ----------------------------------------------------------------------
+
+# Each kind of data is associated with a different id code. This allows us
+# to make easy the selection of what we want to show in the graph.
+
+ONE_WAY_DELAY, \
+OFFSET_FROM_MASTER, \
+SLAVE_TO_MASTER, \
+MASTER_TO_SLAVE, \
+DRIFT \
+    = range(5)
+
+# String names for each id code.
+
+NAMES = {
+    ONE_WAY_DELAY       : "One way delay",
+    OFFSET_FROM_MASTER  : "Offset from Master",
+    SLAVE_TO_MASTER     : "Slave to Master",
+    MASTER_TO_SLAVE     : "Master to Slave",
+    DRIFT               : "Time drift"
+}
+
+# ----------------------------------------------------------------------
+# Accessory stuff: reading options etc
+# ----------------------------------------------------------------------
+
+def getopt (argv):
+    parser = OptionParser()
+    parser.add_option("--one-way-delay", dest="one_way_delay",
+                      type="int", default=1,
+                      help="Select window for one-way-delay (default: 1)")
+    parser.add_option("--offset-from-master", dest="offset_from_master",
+                      type="int", default=1,
+                      help="Select window for offset-from-master")
+    parser.add_option("--slave-to-master", dest="slave_to_master",
+                      type="int", default=1,
+                      help="Select window for slave-to-master "
+                           "(default: 1)")
+    parser.add_option("--master-to-slave", dest="master_to_slave",
+                      type="int", default=1,
+                      help="Select window for master-to-slave "
+                           "(default: 1)")
+    parser.add_option("--time-drift", dest="time_drift",
+                      type="int", default=2,
+                      help="Select window for time draft (default: 2)")
+    parser.add_option("-l", "--logfile", dest="logfile", type="string",
+                      default=None, help="Log file (default: stdin)")
+    o, a = parser.parse_args(argv)
+    if o.logfile:
+        o.logfile = open(o.logfile, "rt")
+    else:
+        o.logfile = sys.stdin
+        print("Reading from stdin", file=sys.stderr)
+    return o, a
+
+# ----------------------------------------------------------------------
+# Storage of statistics
+# ----------------------------------------------------------------------
+
+# Just a parametric dictionary associating id codes with the read value.
+# The time has a dedicated value, as we don't need to reach it by id.
+
+class PTPStat (dict) :
 
     def __init__ (self, time, owd, off_mast, s2m, m2s, drift):
+        super(PTPStat, self).__init__([
+            (ONE_WAY_DELAY, owd),
+            (OFFSET_FROM_MASTER, off_mast),
+            (SLAVE_TO_MASTER, s2m),
+            (MASTER_TO_SLAVE, m2s),
+            (DRIFT, drift)
+        ])
         self.time = time
-        self.one_way_delay = owd
-        self.offset_from_master = off_mast
-        self.slave_to_master = s2m
-        self.master_to_slave = m2s
-        self.drift = drift
+
+# ----------------------------------------------------------------------
+# Parser for CSV file
+# ----------------------------------------------------------------------
 
 def iter_steps (csv):
+    # Converter for the non-standard date-time format used by ptpd2;
     to_time = lambda s : parsedate.parse(
                             "{0}.{2}".format(*s.rpartition(':'))
                          )
@@ -30,7 +112,9 @@ def iter_steps (csv):
         fields = itertools.imap( lambda s : s.strip(), row )
         try:
             ts = to_time(next(fields))
+            # Here we skip all the rows except the "slv" ones;
             if next(fields) != 'slv': raise Exception
+            # The first yielded value signals the validity of the data;
             yield True
             yield ts
             next(fields)
@@ -39,52 +123,67 @@ def iter_steps (csv):
             # Invalid row detected
             print("Skipping \"{0}\" ({1})".format(",".join(row), msg))
             yield False
+    # Call tuple_parts for each row of the cvs;
     csv = itertools.imap(tuple_parts, csv)
+    # Filter out all rows for which the first field is False (i.e. invalid
+    # ones), meanwhile remove the first field (which is useless outside
+    # this function);
     csv = itertools.ifilter( lambda tp : next(tp), csv )
+    # Return an iterator which yields instances of the PTPStat class
+    # starting from the data.
     return itertools.starmap(PTPStat, csv)
 
-def plot (gen):
-    xs = list(ev.time for ev in gen)
+class Plotter :
 
-    ovds = list( ev.one_way_delay for ev in gen )
-    ofms = list( ev.offset_from_master for ev in gen )
-    s2ms = list( ev.slave_to_master for ev in gen )
-    m2ss = list( ev.master_to_slave for ev in gen )
-    drfts = list( ev.drift for ev in gen )
+    def __init__ (self, options):
+        self.windows = defaultdict(list)
 
-    items = list()
+        # Collect data about the parsed options;
+        self.add_plot(ONE_WAY_DELAY,      options.one_way_delay)
+        self.add_plot(OFFSET_FROM_MASTER, options.offset_from_master)
+        self.add_plot(SLAVE_TO_MASTER,    options.slave_to_master)
+        self.add_plot(MASTER_TO_SLAVE,    options.master_to_slave)
+        self.add_plot(DRIFT,              options.time_drift)
 
-    pylab.figure(1)
-    pylab.xticks(rotation=45, size='small')
-    items.append( pylab.plot_date(xs, ovds, "c-") )
-    items.append( pylab.plot_date(xs, ofms, "m-") )
-    items.append( pylab.plot_date(xs, s2ms, "y-") )
-    items.append( pylab.plot_date(xs, m2ss, "k-") )
-    pylab.legend(items, ["One way delay",
-                         "Offset from Master",
-                         "Slave to Master",
-                         "Master to Slave",])
+        try:
+            self.run(options.logfile)
+            return True
+        except Exception, msg:
+            print("Cowardly refusing to plot:", msg, file=sys.stderr)
 
-    pylab.figure(2)
-    pylab.xticks(rotation=45, size='small')
-    pylab.legend([ pylab.plot_date(xs, drfts, "r-") ],
-                 [ "Drifts" ])
+    def add_plot (self, plot_id, figure_id):
+        # The figure id 0 is conventionally used for "don't plot";
+        if figure_id != 0:
+            self.windows[figure_id].append(plot_id)
 
+    def run (self, logfile):
+        if not self.windows:
+            raise Exception("You disabled all data sources")
+        gen = list( iter_steps(csv.reader(logfile)) )
+        if not gen:
+            raise Exception("Your log file seems to be empty")
 
-    pylab.show()
+        # Everything works! Ready to plot stuff
+        import pylab
+        styles = iter("cymkrgb")    # Iterator on colors
+        xs = list( ev.time for ev in gen )
+        for w, targets in self.windows.iteritems():
+            pylab.figure(w)
+            pylab.xticks(rotation=45, size="small")
+            legend = ( list(), list() )
+            for id in targets:
+                ys = list( ev[id] for ev in gen )
+                legend[0].append( pylab.plot_date(xs, ys,
+                                  next(styles) + '-') )
+                legend[1].append( NAMES[id] )
+            pylab.legend(*legend)
+        pylab.show()
 
 def main (argv=None):
     if not argv: argv = sys.argv
-
-    if len(argv) < 2:
-        print("Please provide me the log file!", file=sys.stderr)
-        return 1
-
-    logfile = open(argv[1])
-    gen = list( iter_steps(csv.reader(logfile)) )
-    plot(gen)
-    logfile.close()
-
+    opts = getopt(argv)[0]
+    Plotter(opts)
+    opts.logfile.close()
     return 0
 
 if __name__ == '__main__':
