@@ -82,7 +82,7 @@ are (as long as the functionality we need aren't placed in kernel space).
     named \FileName{/init}, so what we want to do is skip the root
     pivoting and remain in the \StdName{initramfs} environment. If we want
     to automatically execute the \emph{hello world} program at bootstrap
-    we just need something like that:
+    we just need something like this:
 
 \begin{lstlisting}
     host$ cat > userland/init << EOF
