@@ -17,7 +17,7 @@ $(PDF) : $(TEX) $(SUBTEXS)
 	$(PDFLATEX) $(OPTS) $(TEX)
 
 clean:
-	rm -r $(OUTDIR)
+	rm -rf $(OUTDIR) $(PDF)
 
 dir:
 	mkdir -p $(OUTDIR)
