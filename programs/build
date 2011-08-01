@@ -1,0 +1,14 @@
+#!/bin/sh
+
+BIN_RESULT=rootfs.ptpd.uboot
+FILESYSTEM=ramfs.img
+LOAD=0
+ENTRY=$LOAD
+
+rm ${BIN_RESULT}
+(cd mnt; find . | cpio --create --format newc | gzip --best > ../${FILESYSTEM})
+
+mkimage -A powerpc -O Linux -T ramdisk -C gzip -n Sylvie -a ${LOAD} -e ${ENTRY} -d ${FILESYSTEM} ${BIN_RESULT}
+mkimage -T script -C none -n SylvieRun -d bootseq_run bootseq_run.img
+mkimage -T script -C none -n SylvieUpdate -d bootseq_update bootseq_update.img
+

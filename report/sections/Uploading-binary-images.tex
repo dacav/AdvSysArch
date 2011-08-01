@@ -1,7 +1,6 @@
 The \uBoot\ software supports the network booting through \BootP\ + \TFTP.
-This functionality is extremely useful, since it allows to transfer a
-binary object, like a \emph{filesystem image} or a \emph{kernel}, from a
-server to the board.
+This allows to transfer a binary object, like a \emph{filesystem image} or
+a \emph{kernel}, from a server to the board.
 
 The default system, installed by \TechName{Freescale}, defines a boot
 procedure which loads an embedded operating system from the flash memory.
@@ -14,7 +13,7 @@ I modified such setting, and now it behaves as follows:
 
 \item   The host answers providing:
     \begin{itemize}
-    \item   An IP address;
+    \item   The network configuration (IP address + subnet mask);
     \item   The name of a \uBoot\ script to be loaded and executed.
     \end{itemize}
 
@@ -38,6 +37,8 @@ redefine the behavior of the deployed boards in a centralized way.
 Many tutorials on the Internet cover in detail how to properly configure
 the daemons. This section contains the dump of my configuration files and
 an explanation on how I implemented my idea.
+
+But first of all a little overview on how to mess with the network\dots
 
 \subsection{ Network setup }
 
@@ -70,7 +71,7 @@ an explanation on how I implemented my idea.
     embedded into \uBoot.
 
     By running a \emph{sniffer} I discovered that \uBoot\ doesn't answer
-    to \emph{arp requests}: the MAC address must be setted manually on the
+    to \emph{arp requests}: the MAC address must be set manually on the
     host. This problem doesn't show up if a \BootP\ server is used.
 
     \Note{How to deal with \TechName{network-manager}}{
@@ -87,8 +88,9 @@ an explanation on how I implemented my idea.
 
     Both the choosen versions of the packages (see
     Subsection~\ref{sub:OtherTools}) rely on \TechName{Xinetd}\footnote{
+        a secure replacement for the \TechName{Inet} daemon.
         \url{http://xinetd.org}
-    }, a secure replacement for the \TechName{Inet} daemon.
+    }
 
     \subsubsection{\TFTPd}
 
@@ -125,7 +127,7 @@ an explanation on how I implemented my idea.
                 well-known ports, see \FileName{/etc/services}).
         \end{itemize}
 
-    \subsubsection{\BootPd}
+    \subsubsection{ \BootPd } \label{subsub:BootPd}
 
         The configuration of the \BootPd\ daemon is mainly splitted among
         \TechName{Xinetd} settings and \BootPd's own configuration file:
@@ -148,8 +150,8 @@ an explanation on how I implemented my idea.
         port = 67
     }
 \end{lstlisting}
-
-        My \FileName{/etc/bootptab} is the following:
+        while \FileName{/etc/bootptab} contains the actual loading system
+        logic. My one is the following:
 \begin{lstlisting}
     host$ more /etc/boottab
     .default:\
@@ -181,10 +183,11 @@ an explanation on how I implemented my idea.
         \item   The \Const{tc} keyword indicates inheritance of the
                 settings from another label;
 
-        \item   The two behaviors described at the very beginning of this
-                section are managed trough the \Const{.noupdate} and the
-                \Const{.update} labels:
-
+        \item   The two behaviors, described at the very beginning of this
+                section, are managed trough the \Const{.noupdate} and the
+                \Const{.update} labels. \BootP\ allows to define a
+                \emph{boot file} which is automatically loaded by the
+                \emph{client}:
             \begin{enumerate}
             \item   The \Const{.noupdate} label defines as boot file the
                     script which simply runs the system as it is;
@@ -192,6 +195,7 @@ an explanation on how I implemented my idea.
                     script which first updates the system and then runs
                     it.
             \end{enumerate}
+                Further details on Subsection~\ref{sub:StartupModes}.
 
         \item   Finally, for each board (in my case just one of
                 them, I named it just ``\emph{board}'') we can define the
@@ -199,4 +203,91 @@ an explanation on how I implemented my idea.
                 bootstrap (in this case the system will be updated).
 
         \end{itemize}
+
+\subsection{ Startup modes } \label{sub:StartupModes}
+
+    \subsubsection{Bootstrap modification}
+
+        \uBoot\ conventionally uses, as default bootstrap procedure, the
+        sequence of operations listed inside the \Const{bootcmd}
+        environment variable.
+
+        The default \uBoot\ setting by \TechName{Freescale} sets
+        \Const{bootcmd} as follows:
+\begin{lstlisting}
+    bootcmd=run run_vscld1; run ramargs addtty;bootm fe100000 fe300000
+      fe700000
+    run_vscld=tftp 40000 /tftpboot/vsc7385_load.bin;go 40004 
+    ramargs=setenv bootargs root=/dev/ram rw
+    addtty=setenv bootargs ${bootargs} console=ttyS0,${baudrate}
+    baudrate=115200
+\end{lstlisting}
+
+        Basically what they are doing is just loading the operating system
+        having the kernel flashed in location \Const{0xfe100000}, the
+        filesystem image in location \Const{0xfe300000} and the device
+        tree at \Const{0xfe700000}.
+
+        I moved such sequence into another variable named
+        \Const{vendor\_bootcmd}:
+\begin{lstlisting}
+    => setenv vendor_bootcmd ${bootcmd}
+\end{lstlisting}
+    Then I modified the \Const{bootcmd} environment variable as follows:
+\begin{lstlisting}
+    => setenv bootcmd "setenv loadaddr 0x100000; dhcp; source 0x100000"
+\end{lstlisting}
+
+        Do you remember the files I mentioned in
+        Paragraph~\ref{subsub:BootPd}? In the \FileName{/etc/boottab}
+        configuration, \FileName{bootseq\_update.img} and
+        \FileName{bootseq\_run.img} are set as \emph{boot file} for the
+        \Const{.update} and the \Const{.noupdate} label respectively.
+
+        This is what happens with the new setting:
+        \begin{enumerate}
+        \item   The \Const{loadaddr} variable is set to a certain RAM
+                address (I chose arbitrarily \Const{0x100000}). Such
+                variable is conventionally used by the \uBoot\
+                \Command{tftp} command as target memory area for the image
+                loaded from the network;
+        \item   The \Const{dhcp} command loops on the network interfaces
+                and probes for a \BootP\ service. The \emph{boot file}
+                pointed by \BootP\ is downloaded from the \TFTP\ server;
+        \item   The \Command{source} command executes the code placed at
+                location \Const{0x100000} (i.e. where the image has been
+                loaded).
+        \end{enumerate}
+
+    \subsubsection{The internal scripts}
+
+        At this point the question is: what are those two files supposed to
+        do? A nice functionality of \uBoot\ is the support for a basic
+        scripting system. Script files are encapsulated inside binary
+        images with the \mkimage\ program.
+
+        \FileName{bootseq\_run} just requires the execution of the default
+        bootstrap procedure:
+\begin{lstlisting}
+    host$ more bootseq_run
+    run vendor_bootcmd
+\end{lstlisting}
+
+        \FileName{bootseq\_update} loads the \FileName{rootfs.ptpd.uboot}
+        image from the \TFTP\ server and writes it into the flash memory,
+       exactly where the default bootstrap procedure expects to find it.
+        After that the default bootstrap procedure is executed.
+\begin{lstlisting}
+    host$ more bootseq_update
+    setenv kernel 0xfe100000
+    setenv initramfs 0xfe300000
+    setenv devtree 0xfe700000
+    setenv filesize 0
+
+    tftp ${loadaddr} /rootfs.ptpd.uboot
+    erase ${initramfs} +0x${filesize}
+    cp.b 0x${loadaddr} ${initramfs} 0x${filesize}
+
+    run vendor_bootcmd
+\end{lstlisting}
 
