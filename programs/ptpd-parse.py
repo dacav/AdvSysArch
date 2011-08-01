@@ -75,10 +75,16 @@ def plot (gen):
 
 def main (argv=None):
     if not argv: argv = sys.argv
+
+    if len(argv) < 2:
+        print("Please provide me the log file!", file=sys.stderr)
+        return 1
+
     logfile = open(argv[1])
     gen = list( iter_steps(csv.reader(logfile)) )
     plot(gen)
     logfile.close()
+
     return 0
 
 if __name__ == '__main__':
