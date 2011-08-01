@@ -263,8 +263,7 @@ But first of all a little overview on how to mess with the network\dots
 
         At this point the question is: what are those two files supposed to
         do? A nice functionality of \uBoot\ is the support for a basic
-        scripting system. Script files are encapsulated inside binary
-        images with the \mkimage\ program.
+        scripting system.
 
         \FileName{bootseq\_run} just requires the execution of the default
         bootstrap procedure:
@@ -275,7 +274,7 @@ But first of all a little overview on how to mess with the network\dots
 
         \FileName{bootseq\_update} loads the \FileName{rootfs.ptpd.uboot}
         image from the \TFTP\ server and writes it into the flash memory,
-       exactly where the default bootstrap procedure expects to find it.
+        exactly where the default bootstrap procedure expects to find it.
         After that the default bootstrap procedure is executed.
 \begin{lstlisting}
     host$ more bootseq_update
@@ -291,3 +290,59 @@ But first of all a little overview on how to mess with the network\dots
     run vendor_bootcmd
 \end{lstlisting}
 
+        The two script files are encapsulated inside binary images with
+        the \mkimage\ program.
+\begin{lstlisting}
+
+    host$ mkimage -T script -C none -n SylvieRun -d bootseq_run
+          bootseq_run.img
+
+    Image Name:   SylvieRun
+    Created:      Mon Aug  1 10:54:48 2011
+    Image Type:   PowerPC Linux Script (uncompressed)
+    Data Size:    27 Bytes = 0.03 kB = 0.00 MB
+    Load Address: 00000000
+    Entry Point:  00000000
+    Contents:
+    Image 0: 19 Bytes = 0.02 kB = 0.00 MB
+
+    host$ mkimage -T script -C none -n SylvieUpdate -d bootseq_update
+          bootseq_update.img
+
+    Image Name:   SylvieUpdate
+    Created:      Mon Aug  1 10:54:48 2011
+    Image Type:   PowerPC Linux Script (uncompressed)
+    Data Size:    242 Bytes = 0.24 kB = 0.00 MB
+    Load Address: 00000000
+    Entry Point:  00000000
+    Contents:
+    Image 0: 234 Bytes = 0.23 kB = 0.00 MB
+
+\end{lstlisting}
+
+        And of course, in order to be loaded, the created images must be
+        placed into the \TFTP\ root directory.
+
+\subsection{Summing up\dots}
+
+    A script can make things easyer:
+\begin{lstlisting}
+#!/bin/sh
+
+BIN_RESULT=rootfs.ptpd.uboot
+FILESYSTEM=ramfs.img
+LOAD=0
+ENTRY=$LOAD
+
+rm ${BIN_RESULT}
+(cd mnt; find . | cpio --create --format newc | gzip --best > \
+    ../${FILESYSTEM})
+
+mkimage -A powerpc -O Linux -T ramdisk -C gzip -n Sylvie -a ${LOAD} \
+    -e ${ENTRY} -d ${FILESYSTEM} ${BIN_RESULT}
+mkimage -T script -C none -n SylvieRun -d bootseq_run bootseq_run.img
+mkimage -T script -C none -n SylvieUpdate -d bootseq_update \
+    bootseq_update.img
+\end{lstlisting}
+    but remember to mount the filesystem before launching it, or you'll
+    end up with an empty filesystem!
