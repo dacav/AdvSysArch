@@ -1,0 +1,324 @@
+diff --git a/application/src/arith.c b/application/src/arith.c
+index 076f541..7c06cc1 100644
+--- a/application/src/arith.c
++++ b/application/src/arith.c
+@@ -57,9 +57,13 @@
+  * General Public License as published by the Free Software Foundation;   
+  * either version 2 of the License, or (at your option) any later version.
+  */ 
++#include <stdint.h>
+ #include "ptpd.h"
+ 
+ #define NSEC 1000000000
++#ifndef INT_MAX
++#   define INT_MAX ((int)(1 << ((sizeof(int) * 8) - 1)))
++#endif
+ 
+ #define	NSEC_TIME_TO_SECS(nsec_time)	\
+ 	( (Integer32) (nsec_time/NSEC) )
+diff --git a/application/src/dep/constants_dep.h b/application/src/dep/constants_dep.h
+index b5a5cce..361dd65 100644
+--- a/application/src/dep/constants_dep.h
++++ b/application/src/dep/constants_dep.h
+@@ -205,10 +205,10 @@
+ #elif defined CONFIG_MPC831X
+ 
+ /* System Dependent (AKB: Moved from constants.h to constants_dep.h */
+-/* Defines for MPC831X implementation with Hardware timestampinng
++/* Defines for MPC831X implementation with Hardware timestampinng */
+ 
+ #define DEFAULT_SYNC_INTERVAL        0
+-#define DEFAULT_ANNOUNCE_INTERVAL    2  // AKB: Added for PTP V2
++#define DEFAULT_ANNOUNCE_INTERVAL    2        /* AKB: Added for PTP V2 */
+ #define DEFAULT_V1_CLOCK_VARIANCE    (-1000)  /* AKB: renamed for V2, changed for HW clock */
+ #define DEFAULT_V2_CLOCK_VARIANCE    ( 1000)  /* AKB: added   for V2, changed for HW clock */
+ #define DEFAULT_CLOCK_STRATUM        4
+diff --git a/application/src/dep/net.c b/application/src/dep/net.c
+index cbdfb6c..bd3b4d1 100644
+--- a/application/src/dep/net.c
++++ b/application/src/dep/net.c
+@@ -2314,7 +2314,7 @@ ssize_t netRecvEvent(Octet *buf,
+     }
+     
+     DBGV("netRecvEvent:   recvfrom error : %d\n",
+-         ret
++         (int)ret
+         );
+     return ret;
+   }
+@@ -2344,7 +2344,7 @@ ssize_t netRecvEvent(Octet *buf,
+   if(msg.msg_controllen < sizeof(cmsg_un.control))
+   {
+     PERROR("netRecvEvent:   short ancillary data (%d/%d)\n",
+-      msg.msg_controllen, (int)sizeof(cmsg_un.control));
++      (int)msg.msg_controllen, (int)sizeof(cmsg_un.control));
+     
+     return 0;
+   }
+@@ -2407,7 +2407,7 @@ ssize_t netRecvEvent(Octet *buf,
+ 
+   DBGV("netRecvEvent:   %s length: %d\n",
+        netPath->ifName,
+-       ret
++       (int)ret
+       );
+ 
+   /* Temp for debug: dump hex data *
+@@ -2492,13 +2492,13 @@ ssize_t netRecvGeneral(Octet *buf, NetPath *netPath)
+     }
+     
+     DBGV("netRecvGeneral: recvfrom error : %d\n",
+-         ret
++         (int)ret
+         );
+     return ret;
+   }
+   DBGV("netRecvGeneral: %s length: %d\n",
+        netPath->ifName,
+-       ret
++       (int)ret
+       );
+   /* Temp for debug: dump hex data *
+ 
+@@ -2588,14 +2588,14 @@ ssize_t netRecvRaw(Octet *buf, NetPath *netPath)
+     }
+     
+     DBGV("netRecvRaw:     recvfrom error : %d\n",
+-         ret
++         (int)ret
+         );
+     return ret;
+   }
+ 
+   DBGV("netRecvRaw:     %s length: %d\n",
+        netPath->ifName,
+-       ret
++       (int)ret
+       );
+ 
+   /* Temp for debug: dump hex data 
+@@ -2700,8 +2700,8 @@ ssize_t netSendEvent(Octet *buf, UInteger16 length, NetPath *netPath, Boolean pd
+   
+   DBGV("netSendEvent: %s requested: %d, sent: %d\n",
+        netPath->ifName,
+-       length,
+-       ret
++       (int)length,
++       (int)ret
+       );  
+   return ret;
+ }
+@@ -2786,8 +2786,8 @@ ssize_t netSendGeneral(Octet *buf, UInteger16 length, NetPath *netPath, Boolean
+ 
+   DBGV("netSendGeneral: %s requested: %d, sent: %d\n",
+       netPath->ifName,
+-      length,
+-      ret
++      (int)length,
++      (int)ret
+      );  
+   return ret;
+ }
+@@ -2802,7 +2802,7 @@ ssize_t netSendRaw(Octet *buf, UInteger16 length, NetPath *netPath, Boolean pdel
+   struct  sockaddr_ll rawaddr;
+   int     i;
+ 
+-  DBGV("netSendRaw: buf %p, length: %d\n", buf, length);
++  DBGV("netSendRaw: buf %p, length: %d\n", buf, (int)length);
+ 
+   /* Dump hex data if message level debugging enabled */
+   if (pdelay)
+@@ -2864,15 +2864,15 @@ ssize_t netSendRaw(Octet *buf, UInteger16 length, NetPath *netPath, Boolean pdel
+   if(ret <= 0)
+   {
+     DBG("netSendRaw: error %d sending raw frame\n",
+-        ret
++        (int)ret
+        );
+     return ret;
+   }
+   
+   DBGV("netSendRaw: %s requested:%d, sent:%d\n",
+       netPath->ifName,
+-      length,
+-      ret
++      (int)length,
++      (int)ret
+      );
+   
+   return ret;
+diff --git a/application/src/protocol.c b/application/src/protocol.c
+index cc6e14f..6239053 100644
+--- a/application/src/protocol.c
++++ b/application/src/protocol.c
+@@ -1111,7 +1111,7 @@ void handle(RunTimeOpts * rtOpts,  /**< Pointer to run time options */
+             {
+                // Frame to small, ignore
+                DBGV("handle: raw socket tiny frame, length %d\n",
+-                    length
++                    (int) length
+                    );
+                return;
+             }
+@@ -1378,7 +1378,7 @@ TimeInternal debug_delta_time = {0,0};
+   {
+   case V2_SYNC_MESSAGE:  /* V1 control: 0x00, V2 type: 0x0 */
+     DBGV("handle: SYNC_MESSAGE, length: %d\n",
+-         length
++         (int)length
+         );
+     handleSync(&ptpClock->msgTmpHeader,
+                &ptpClock->v2MsgTmpHeader, 
+@@ -1393,7 +1393,7 @@ TimeInternal debug_delta_time = {0,0};
+     
+   case V2_FOLLOWUP_MESSAGE: /* V1 control: 0x02, V2 type: 0x8 */
+     DBGV("handle: FOLLOWUP_MESSAGE, length: %d\n",
+-         length
++         (int)length
+         );
+     handleFollowUp(&ptpClock->msgTmpHeader, 
+                    &ptpClock->v2MsgTmpHeader, 
+@@ -1407,7 +1407,7 @@ TimeInternal debug_delta_time = {0,0};
+     
+   case V2_DELAY_REQ_MESSAGE: /* V1 control: 0x01, V2 type: 0x1 */
+     DBGV("handle: DELAY_REQ_MESSAGE, length: %d\n",
+-         length
++         (int)length
+         );
+     if (getSeconds(&time) != 0)
+     {
+@@ -1430,7 +1430,7 @@ TimeInternal debug_delta_time = {0,0};
+     
+   case V2_DELAY_RESP_MESSAGE: /* V1 control: 0x03, V2 type: 0x9 */
+     DBGV("handle: DELAY_RESP_MESSAGE, length: %d\n",
+-         length
++         (int)length
+         );
+     handleDelayResp(&ptpClock->msgTmpHeader,
+                     &ptpClock->v2MsgTmpHeader,
+@@ -1444,7 +1444,7 @@ TimeInternal debug_delta_time = {0,0};
+     
+   case PTP_MANAGEMENT_MESSAGE: /* V1 control: 0x04, V2 type: 0xD */
+     DBGV("handle: MANAGEMENT_MESSAGE, length: %d\n",
+-         length
++         (int)length
+         );
+     if (ptpClock->current_msg_version == 1)
+     {
+@@ -1464,7 +1464,7 @@ TimeInternal debug_delta_time = {0,0};
+ 
+   case V2_ANNOUNCE_MESSAGE:  /* V2 type: 0xb */
+     DBGV("handle: ANNOUNCE_MESSAGE, length: %d\n",
+-         length
++         (int)length
+         );
+     handleAnnounce(&ptpClock->v2MsgTmpHeader, 
+                     ptpClock->msgIbuf, 
+@@ -1479,7 +1479,7 @@ TimeInternal debug_delta_time = {0,0};
+ 
+   case V2_PDELAY_REQ_MESSAGE: /* V2 type: 0x2 */
+     DBGV("handle: PDELAY_REQ_MESSAGE, length: %d\n",
+-         length
++         (int)length
+         );
+     handlePDelayReq(&ptpClock->v2MsgTmpHeader,
+                      ptpClock->msgIbuf,
+@@ -1493,7 +1493,7 @@ TimeInternal debug_delta_time = {0,0};
+     
+   case V2_PDELAY_RESP_MESSAGE: /* V2 type: 0x3 */
+     DBGV("handle: PDELAY_RESP_MESSAGE, length: %d\n",
+-         length
++         (int)length
+         );
+     handlePDelayResp(&ptpClock->v2MsgTmpHeader,
+                       ptpClock->msgIbuf,
+@@ -1507,7 +1507,7 @@ TimeInternal debug_delta_time = {0,0};
+ 
+   case V2_PDELAY_RESP_FOLLOWUP_MESSAGE: /* V2 type: 0xA */
+     DBGV("handle: PDELAY_RESP_FOLLOWUP MESSAGE, length: %d\n",
+-         length
++         (int)length
+         );
+     handlePDelayRespFollowUp(&ptpClock->v2MsgTmpHeader,
+                               ptpClock->msgIbuf,
+@@ -1945,7 +1945,7 @@ void handleSync(MsgHeader    *header,    /**< Pointer to PTP version 1 message h
+   UInteger16    sequence_delta;
+   Boolean       current_sequence;
+ 
+-  DBGV("handleSync: length = %d\n",length);
++  DBGV("handleSync: length = %d\n", (int)length);
+ 
+   if (
+          ((ptpClock->current_msg_version == 1) && (length < SYNC_PACKET_LENGTH))
+@@ -2284,7 +2284,7 @@ void handleFollowUp(MsgHeader    *header,    /**< Pointer to PTP version 1 messa
+                     V2MsgHeader  *v2_header, /**< Pointer to PTP version 2 message header */
+                     Octet        *msgIbuf,   /**< Pointer to PTP raw message data */
+                     ssize_t       length,    /**< PTP message length */
+-                    TimeInternal *time,      /**< Time PTP message was received */
++//                    TimeInternal *time,      /**< Time PTP message was received */
+                     Boolean       isFromSelf,/**< Boolean flag if message was from self (socket loopback) */
+                     RunTimeOpts * rtOpts,    /**< Pointer to run time options */
+                     PtpClock *    ptpClock   /**< Pointer to PTP clock structure */
+@@ -2575,7 +2575,7 @@ void handleDelayReq(
+     PtpClock *    ptpClock   /**< Pointer to PTP clock structure */
+     )
+ {
+-  DBGV("handleDelayReq: message length: %d\n",length);
++  DBGV("handleDelayReq: message length: %d\n", (int)length);
+   if(   ((ptpClock->current_msg_version == 1) && (length < DELAY_REQ_PACKET_LENGTH))
+      || length < V2_DELAY_REQ_LENGTH
+     )
+@@ -2648,7 +2648,7 @@ void handleDelayResp(
+     V2MsgHeader  *v2_header, /**< Pointer to PTP version 2 message header */
+     Octet        *msgIbuf,   /**< Pointer to PTP raw message data */
+     ssize_t       length,    /**< PTP message length */
+-    TimeInternal *time,      /**< Time PTP message was received */
++    //TimeInternal *time,      /**< Time PTP message was received */
+     Boolean       isFromSelf,/**< Boolean flag if message was from self (socket loopback) */
+     RunTimeOpts * rtOpts,    /**< Pointer to run time options */
+     PtpClock *    ptpClock   /**< Pointer to PTP clock structure */
+@@ -2658,7 +2658,7 @@ void handleDelayResp(
+   V2MsgDelayResp *v2resp;
+   Boolean         delay_response_ok;
+ 
+-  DBGV("handleDelayResp: message length: %d\n",length);
++  DBGV("handleDelayResp: message length: %d\n", (int)length);
+   if(   ((ptpClock->current_msg_version == 1) && (length < DELAY_RESP_PACKET_LENGTH))
+      || length < V2_DELAY_RESP_LENGTH
+     )  
+@@ -2777,7 +2777,7 @@ void handlePDelayReq(
+     )
+ 
+ {
+-  DBGV("handlePDelayReq: message length: %d\n",length);
++  DBGV("handlePDelayReq: message length: %d\n", (int)length);
+   if(length < V2_PDELAY_REQ_LENGTH)
+   {   
+     PERROR("handlePDelayReq: short pdelay request message\n");
+@@ -2869,7 +2869,7 @@ void handlePDelayResp(
+   V2MsgPDelayResp     *v2presp;
+   
+ 
+-  DBGV("handlePDelayResp: message length: %d\n",length);
++  DBGV("handlePDelayResp: message length: %d\n", (int)length);
+   if(length < V2_PDELAY_RESP_LENGTH)
+   {   
+     PERROR("handlePDelayResp: short pdelay response message\n");
+@@ -3030,7 +3030,7 @@ void handlePDelayRespFollowUp(
+     V2MsgHeader  *v2_header, /**< Pointer to PTP version 2 message header */
+     Octet        *msgIbuf,   /**< Pointer to PTP raw message data */
+     ssize_t       length,    /**< PTP message length */
+-    TimeInternal *time,      /**< Time PTP message was received */
++    //TimeInternal *time,      /**< Time PTP message was received */
+     Boolean       isFromSelf,/**< Boolean flag if message was from self (socket loopback) */
+     RunTimeOpts * rtOpts,    /**< Pointer to run time options */
+     PtpClock *    ptpClock   /**< Pointer to PTP clock structure */
+@@ -3041,7 +3041,7 @@ void handlePDelayRespFollowUp(
+   V2MsgPDelayRespFollowUp *v2pfollow;
+   
+ 
+-  DBGV("handlePDelayRespFollowUp: message length: %d\n",length);
++  DBGV("handlePDelayRespFollowUp: message length: %d\n", (int)length);
+   if(length < V2_PDELAY_RESP_FOLLOWUP_LENGTH)
+   {   
+     PERROR("handlePDelayRespFollowUp: short pdelay response follow up message\n");
