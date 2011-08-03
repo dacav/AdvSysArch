@@ -20,14 +20,21 @@
 
 \maketitle
 
-%    \section*{ \center Abstract }
-%
-%        The \MyBoard\ is a \PPC-based board equiped with a
-%        \TechName{Vitesse VSC7385 L2 switch}, which integrates the
-%        \StdName{IEEE 1588} time synchronization protocol.
-%
-%        TODO: check info and write stuff.
-%
+    \section*{ \center Abstract }
+
+        \StdName{IEEE 1588} is a standard defining the \emph{Precision
+        Time Protocol}, a protocol which allows to synchronize the
+        computers on a LAN.
+
+        The \MyBoard\ is a \PPC-based board equipped with a
+        \TechName{Vitesse VSC7385 L2 switch}. This device integrates in
+        the logic required to propagate the \PTP\ datagrams in hardware,
+        reducing so far the latency to a couple of \emph{nanoseconds}.
+
+        In this report I'll illustrate how to run \PTPd, a
+        \emph{BSD-licensed} software which understands the protocol and
+        controls the hardware.
+
     \tableofcontents
     \newpage
 

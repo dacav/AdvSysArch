@@ -293,7 +293,6 @@ But first of all a little overview on how to mess with the network\dots
         The two script files are encapsulated inside binary images with
         the \mkimage\ program.
 \begin{lstlisting}
-
     host$ mkimage -T script -C none -n SylvieRun -d bootseq_run
           bootseq_run.img
 
@@ -317,7 +316,6 @@ But first of all a little overview on how to mess with the network\dots
     Entry Point:  00000000
     Contents:
     Image 0: 234 Bytes = 0.23 kB = 0.00 MB
-
 \end{lstlisting}
 
         And of course, in order to be loaded, the created images must be
@@ -325,7 +323,8 @@ But first of all a little overview on how to mess with the network\dots
 
 \subsection{Summing up\dots}
 
-    A script can make things easyer:
+    A script can make things easyer, but remember to mount the filesystem
+    before launching it, or you'll end up with an empty filesystem:
 \begin{lstlisting}
 #!/bin/sh
 
@@ -344,5 +343,4 @@ mkimage -T script -C none -n SylvieRun -d bootseq_run bootseq_run.img
 mkimage -T script -C none -n SylvieUpdate -d bootseq_update \
     bootseq_update.img
 \end{lstlisting}
-    but remember to mount the filesystem before launching it, or you'll
-    end up with an empty filesystem!
+
