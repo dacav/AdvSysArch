@@ -160,11 +160,7 @@ class Plotter :
         self.add_plot(MASTER_TO_SLAVE,    options.master_to_slave)
         self.add_plot(DRIFT,              options.time_drift)
 
-        try:
-            self.run(options.logfile)
-            return True
-        except Exception, msg:
-            print("Cowardly refusing to plot:", msg, file=sys.stderr)
+        self.run(options.logfile)
 
     def add_plot (self, plot_id, figure_id):
         # The figure id 0 is conventionally used for "don't plot";
@@ -197,9 +193,14 @@ class Plotter :
 def main (argv=None):
     if not argv: argv = sys.argv
     opts = getopt(argv)[0]
-    Plotter(opts)
-    opts.logfile.close()
-    return 0
+    try:
+        Plotter(opts)
+        return 0
+    except Exception, msg:
+        print("Cowardly refusing to plot:", msg, file=sys.stderr)
+        return 1
+    finally:
+        opts.logfile.close()
 
 if __name__ == '__main__':
     sys.exit(main())
