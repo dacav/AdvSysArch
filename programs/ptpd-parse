@@ -87,6 +87,8 @@ def getopt (argv):
                       help="Select window for time draft (default: 2)")
     parser.add_option("-l", "--logfile", dest="logfile", type="string",
                       default=None, help="Log file (default: stdin)")
+    parser.add_option("-o", "--out", dest="out_format", type="string",
+                      default=None, help="Output file format")
     o, a = parser.parse_args(argv)
     if o.logfile:
         o.logfile = open(o.logfile, "rt")
@@ -153,6 +155,8 @@ class Plotter :
     def __init__ (self, options):
         self.windows = defaultdict(list)
 
+        self.out = options.out_format
+
         # Collect data about the parsed options;
         self.add_plot(ONE_WAY_DELAY,      options.one_way_delay)
         self.add_plot(OFFSET_FROM_MASTER, options.offset_from_master)
@@ -190,7 +194,11 @@ class Plotter :
                                   next(styles) + '-') )
                 legend[1].append( NAMES[id] )
             pylab.legend(*legend)
-        pylab.show()
+            if self.out:
+                pylab.savefig("figure_{0:02}.{1}".format(w, self.out),
+                              format=self.out)
+        if not self.out:
+            pylab.show()
 
 def main (argv=None):
     if not argv: argv = sys.argv
