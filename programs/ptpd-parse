@@ -180,6 +180,8 @@ class Plotter :
         xs = list( ev.time for ev in gen )
         for w, targets in self.windows.iteritems():
             pylab.figure(w)
+            pylab.ylabel("nanoseconds");
+            pylab.xlabel("UTC time");
             pylab.xticks(rotation=45, size="small")
             legend = ( list(), list() )
             for id in targets:
