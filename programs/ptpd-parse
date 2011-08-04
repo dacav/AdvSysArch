@@ -88,7 +88,11 @@ def getopt (argv):
     parser.add_option("-l", "--logfile", dest="logfile", type="string",
                       default=None, help="Log file (default: stdin)")
     parser.add_option("-o", "--out", dest="out_format", type="string",
-                      default=None, help="Output file format")
+                      default=None, help="Output file format (default:"
+                                         " show window)")
+    parser.add_option("--out-fname", dest="out_filename", type="string",
+                      default="figure", help="Output file name (default:"
+                                             "\"figure\")")
     o, a = parser.parse_args(argv)
     if o.logfile:
         o.logfile = open(o.logfile, "rt")
@@ -156,6 +160,7 @@ class Plotter :
         self.windows = defaultdict(list)
 
         self.out = options.out_format
+        self.outfn = options.out_filename
 
         # Collect data about the parsed options;
         self.add_plot(ONE_WAY_DELAY,      options.one_way_delay)
@@ -195,8 +200,8 @@ class Plotter :
                 legend[1].append( NAMES[id] )
             pylab.legend(*legend)
             if self.out:
-                pylab.savefig("figure_{0:02}.{1}".format(w, self.out),
-                              format=self.out)
+                fn = self.outfn + "{0:02}.{1}"
+                pylab.savefig(fn.format(w, self.out), format=self.out)
         if not self.out:
             pylab.show()
 
