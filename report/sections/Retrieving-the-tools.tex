@@ -69,15 +69,20 @@ They can be used in case of partial or total rebuilding of the system.
 
     \item   \BootP\ and \TFTP\ daemons are needed, and many solutions are
             available for both of them.
-            \begin{itemize}
-            \item   I used the server packaged as \PackageName{tftpd}
-                    under \Debian-like distributions and
-                    \PackageName{tftp-server} under \RedHat-like
-                    distributions;
-            \item   I used the server packaged as \PackageName{bootp}
-                    under \Debian-like distributions. I'm not sure about
-                    the package name under \RedHat.
-            \end{itemize}
+        \begin{itemize}
+        \item   I used the server packaged as \PackageName{tftpd}
+                under \Debian-like distributions and
+                \PackageName{tftp-server} under \RedHat-like
+                distributions;
+        \item   I used the server packaged as \PackageName{bootp}
+                under \Debian-like distributions. I'm not sure about
+                the package name under \RedHat.
+        \end{itemize}
+
+    \item   To run the script described in Subsection~\ref{sub:Stats}
+            you'll need \TechName{Python Matplotlib}, packaged as
+            \PackageName{python-matplotlib} for both \Debian-like and
+            \RedHat-like distributions.
 
     \end{itemize}
 
