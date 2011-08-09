@@ -56,9 +56,8 @@ I'll focus on the protocol itself.
         \end{itemize}
         The date immediately synchronized with the \emph{master}, and this
         is a nice proof of concept, although not exhaustive: accurate
-        statistics data is needed.
-
-        The daemon provides a way to obtain data. More on this on
+        statistics are needed.
+        The daemon provides a way to obtain such data. More on this on
         Subsection~\ref{sub:Stats}.
 
         \Note{Lack of hardware support}{
@@ -100,30 +99,9 @@ I'll focus on the protocol itself.
   host$ CC=powerpc-linux-gcc make
   powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
   -o ptpv2d.o ptpv2d.c
-  powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
-  -o arith.o arith.c
-  powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
-  -o bmc.o bmc.c
-  powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
-  -o probe.o probe.c
-  powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
-  -o protocol.o protocol.c
-  powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
-  -o v2utils.o v2utils.c
-  powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
-  -o v2bmc.o v2bmc.c
-  powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
-  -o dep/msg.o dep/msg.c
-  powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
-  -o dep/net.o dep/net.c
-  powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
-  -o dep/servo.o dep/servo.c
-  powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
-  -o dep/startup.o dep/startup.c
-  powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
-  -o dep/sys.o dep/sys.c
-  powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
-  -o dep/timer.o dep/timer.c
+  ...
+  ...
+  ...
   powerpc-linux-gcc -c -Wall -DPTPD_DBGV -Dlinux -DSOCKET_TIMESTAMPING
   -o dep/ledlib.o dep/ledlib.c
   powerpc-linux-gcc -lrt -o ptpv2d ptpv2d.o arith.o bmc.o probe.o
@@ -189,9 +167,10 @@ I'll focus on the protocol itself.
         to convert the \StdName{csv} to some input suitable for
         \TechName{gnuplot}, but it was pretty awkward to use, so I decided
         to restyle it, ending up in rewriting it from scratch using
-        \TechName{PyLab}. You can find it in my \MyRepo.
+        \TechName{PyLab}. You can find it in my \MyRepo\ (the file is
+        \FileName{programs/ptpd-parse}).
 
-        \subsubsection{Simple usage}
+        \subsubsection{Simple usage of \TechName{ptpd-parse}}
 
             The simplest way of using it is just redirecting the \emph{log
             file} as standard input for the script:
@@ -212,7 +191,7 @@ I'll focus on the protocol itself.
                     evolution of the \emph{Time drift};
             \end{itemize}
 
-        \subsubsection{Parametric usage}
+        \subsubsection{Parameters of \TechName{ptpd-parse}}
 
             The \Const{--help} flag will display the inline help:
 \begin{lstlisting}

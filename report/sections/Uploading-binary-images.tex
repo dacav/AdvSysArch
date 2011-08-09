@@ -11,11 +11,9 @@ I modified such setting, and now it behaves as follows:
 \item   After a basic bootstrap the board queries the network with the
         \StdName{dhcp};
 
-\item   The host answers providing:
-    \begin{itemize}
-    \item   The network configuration (IP address + subnet mask);
-    \item   The name of a \uBoot\ script to be loaded and executed.
-    \end{itemize}
+\item   The host answers providing the network configuration (IP Address +
+        Subnet Mask) and the name of a \uBoot\ script to be loaded and
+        executed.
 
 \item   Basing on the script two different things can happen:
     \begin{itemize}
@@ -25,8 +23,8 @@ I modified such setting, and now it behaves as follows:
             the flash memory, replacing the previous image of the
             filesystem (\emph{update booting}).
     \end{itemize}
-    In both cases the assigned IP number is propagated also to the \Linux\
-    system trought the kernel's command line options.
+    In both cases the assigned network settings are propagated also to the
+    \Linux\ system trought the kernel's command line options.
 
 \end{enumerate}
 
@@ -65,7 +63,7 @@ But first of all a little overview on how to mess with the network\dots
     }
 
     During my experiments I noticed that \uBoot\ allows to both set
-    manually an IP address for the board or use a \BootP\ server in order
+    manually an IP Address for the board or use a \BootP\ server in order
     to make the procedure automated. The status of the network connection
     can be verified by using a simple version of the \emph{ping} program
     embedded into \uBoot.
@@ -190,7 +188,7 @@ But first of all a little overview on how to mess with the network\dots
                 \emph{client}:
             \begin{enumerate}
             \item   The \Const{.noupdate} label defines as boot file the
-                    script which simply runs the system as it is;
+                    script which simply runs the system as~it~is;
             \item   The \Const{.update} label defines as boot file the
                     script which first updates the system and then runs
                     it.

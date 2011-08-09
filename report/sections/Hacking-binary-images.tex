@@ -3,7 +3,7 @@ stable environment, possibly with some automatisms.
 
 An Embedded \Linux\ environment needs three main items: \emph{kernel}, a
 \emph{filesystem image} and a \emph{device tree}. Those three guys, as
-explained in Section~\ref{sec:GetTools}, are provided by
+explained in Section~\ref{sec:GetTools}, are already provided by
 \TechName{Freescale}.
 
 If we want to permanently install programs on the board we basically need
@@ -69,18 +69,21 @@ are (as long as the functionality we need aren't placed in kernel space).
 
     At this point we need a little magic: during bootstrap the \Linux\
     kernel relies on a temporary root filesystem, which usually contains
-    the modules to be loaded before starting the actual operating system.
-    When the modules are loaded the \Command{pivot\_root} command is used
+    the modules to be loaded before the actual operating system is
+    started.
+    When the modules are loaded, the \Command{pivot\_root} command is
+    usually launched
     to swap the temporary root with the actual root.
 
     Many different solutions are supported here, but the
-    \StdName{initramfs} is definitely the most easy and immediate: it's
+    \StdName{initramfs} is definitely the most immediate: it's
     shaped as a \StdName{gzipped cpio} archive. More information on this
     topic can be easily found on the web.
 
     After the bootstrap, the \Linux\ kernel will try to execute the file
     named \FileName{/init}, so what we want to do is skip the root
-    pivoting and remain in the \StdName{initramfs} environment. If we want
+    pivoting phase and remain in the \StdName{initramfs} environment. If
+    we want
     to automatically execute the \emph{hello world} program at bootstrap
     we just need something like this:
 
@@ -91,7 +94,7 @@ are (as long as the functionality we need aren't placed in kernel space).
     > mount -t proc /proc proc
     > mount -t sysfs none /sys
     >
-    > hello
+    > /bin/hello
     >
     > echo 'Ready to go! Welcome!'
     > /bin/ash --login
@@ -106,8 +109,8 @@ are (as long as the functionality we need aren't placed in kernel space).
     host$ cd userland
     host$ find . | cpio -o -H newc | gzip --best > ../initramfs.img
     host$ cd ..
-    host$ mkimage -A powerpc -O Linux -T ramdisk -C gzip -n Sylvie -a 0 -e
-          0 -d initramfs.img rootfs.hello.uboot
+    host$ mkimage -A powerpc -O Linux -T ramdisk -C gzip -n Sylvie
+          -a 0 -e 0 -d initramfs.img rootfs.hello.uboot
 
     Image Name:   Sylvie
     Created:      Wed Jul 27 17:31:47 2011
