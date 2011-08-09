@@ -46,7 +46,7 @@ I'll focus on the protocol itself.
         Section~\ref{sec:HackImages}).
 
         In order to quickly test the functionality of the daemon, after
-        plugging it into the \emph{master}, I tried to:
+        plugging it into the \emph{Master}, I tried to:
         \begin{itemize}
         \item   Deactivate the daemon (by using the \Command{kill}
                 command);
@@ -54,7 +54,7 @@ I'll focus on the protocol itself.
                 command);
         \item   Reactivate the daemon (just by launching it).
         \end{itemize}
-        The date immediately synchronized with the \emph{master}, and this
+        The date immediately synchronized with the \emph{Master}, and this
         is a nice proof of concept, although not exhaustive: accurate
         statistics are needed.
         The daemon provides a way to obtain such data. More on this on
@@ -184,9 +184,9 @@ I'll focus on the protocol itself.
                     evolution of:
                 \begin{itemize}
                 \item   \emph{One way delay};
-                \item   \emph{Offset from master};
-                \item   \emph{Slave to master};
-                \item   \emph{Master to slave};
+                \item   \emph{Offset from Master};
+                \item   \emph{Slave to Master};
+                \item   \emph{Master to Slave};
                 \end{itemize}
             \item   The second one (\emph{figure 2}) will contain the time
                     evolution of the \emph{Time drift};
@@ -222,8 +222,8 @@ I'll focus on the protocol itself.
 
             By selecting windows you can decide where to plot data. For
             instance, the following command will plot the \emph{One way
-            delay} and the \emph{Offset from master} in a window,
-            the \emph{Slave to master} and the \emph{Master to slave} into
+            delay} and the \emph{Offset from Master} in a window,
+            the \emph{Slave to Master} and the \emph{Master to Slave} into
             another window, and won't display the \emph{Time drift}.
 \begin{lstlisting}
   host$ cat data/stats.txt | programs/ptpd-parse --one-way-delay=1
@@ -234,9 +234,9 @@ I'll focus on the protocol itself.
             Also you can save the plots on output files. You can specify a
             format with the \Const{--out} or \Const{-o} flag. For instance
             the following command is like the previous one, but saves
-            the \emph{One way delay} and the \emph{Offset from master} in
+            the \emph{One way delay} and the \emph{Offset from Master} in
             a file named \FileName{figure01.pdf}, the \emph{Slave to
-            master} and the \emph{Master to slave} into a file named
+            Master} and the \emph{Master to Slave} into a file named
             \FileName{figure02.pdf}, and won't save the \emph{Time
             drift}:
 \begin{lstlisting}
@@ -247,4 +247,37 @@ I'll focus on the protocol itself.
             If you don't like the name \FileName{figure01.pdf} and you
             prefer \FileName{garbage.pdf} try with the
             \Const{--out-fn=garbage} option.
+
+\subsection{ Example of statistics }
+
+    Here there are some examples of statistics I collected during my
+    experiments. Unfortunately they are not so significative, but still
+    they give an idea of the kind of data resulting from the daemon's
+    output log.
+
+    In order to test the system I tried to connect the board with a Master
+    through a \StdName{RJ-45} cable, then I activated the daemon on the
+    board as explained in Subsection~\ref{sub:Stats}, collecting
+    statistics relative to the board on a file.
+
+    Figure~\ref{img:OFM-MTS} shows the evolution of the \emph{system time
+    offset} with respect to the Master (in cyan) and the time required by
+    the synchronization signal produced by the Master to reach the board
+    (Magenta).
+    \begin{figure}[hb]
+        \centering
+        \includegraphics[width=.8\textwidth]{pics/figure01}
+        \caption{Data sample: \emph{Offset from Master} and \emph{Master to
+                 Slave}}
+        \label{img:OFM-MTS}
+    \end{figure}
+
+    The graphic in Figure~\ref{img:TimeDrift}, on the other hand, shows
+    the behavior of the Slave's time drift in the same period
+    \begin{figure}[hb]
+        \centering
+        \includegraphics[width=.8\textwidth]{pics/figure02}
+        \caption{Data sample: \emph{Time drift} of the Slave}
+        \label{img:TimeDrift}
+    \end{figure}
 
