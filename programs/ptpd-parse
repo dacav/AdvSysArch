@@ -185,13 +185,21 @@ class Plotter :
 
         # Everything works! Ready to plot stuff
         import pylab
+
+        # General settings to launch for each window
+        def mod_window (w):
+            # borders
+            fig = pylab.figure(w)
+            fig.add_axes( pylab.Axes(fig, [.13, .18, .84, .8]) )
+            # labels
+            pylab.ylabel("nanoseconds");
+            pylab.xlabel("UTC time")
+            pylab.xticks(rotation=45, size="small")
+
         styles = iter("cymkrgb")    # Iterator on colors
         xs = list( ev.time for ev in gen )
         for w, targets in self.windows.iteritems():
-            pylab.figure(w)
-            pylab.ylabel("nanoseconds");
-            pylab.xlabel("UTC time");
-            pylab.xticks(rotation=45, size="small")
+            mod_window(w)
             legend = ( list(), list() )
             for id in targets:
                 ys = list( ev[id] for ev in gen )
