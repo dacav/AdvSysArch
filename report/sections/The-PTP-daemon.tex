@@ -263,21 +263,22 @@ I'll focus on the protocol itself.
     Figure~\ref{img:OFM-MTS} shows the evolution of the \emph{system time
     offset} with respect to the Master (in cyan) and the time required by
     the synchronization signal produced by the Master to reach the board
-    (Magenta).
-    \begin{figure}[hb]
+    (Magenta). The graphic in Figure~\ref{img:TimeDrift}, on the other
+    hand, shows the behavior of the Slave's time drift in the same period.
+
+    \begin{figure}[p]
         \centering
         \includegraphics[width=.8\textwidth]{pics/figure01}
-        \caption{Data sample: \emph{Offset from Master} and \emph{Master to
-                 Slave}}
+        \caption{Data sample collected by the board: \emph{Offset from
+                 Master} and \emph{Master to Slave}}
         \label{img:OFM-MTS}
     \end{figure}
 
-    The graphic in Figure~\ref{img:TimeDrift}, on the other hand, shows
-    the behavior of the Slave's time drift in the same period
-    \begin{figure}[hb]
+    \begin{figure}[p]
         \centering
         \includegraphics[width=.8\textwidth]{pics/figure02}
-        \caption{Data sample: \emph{Time drift} of the Slave}
+        \caption{Data sample collected by the board: \emph{Time drifting}
+                 of the Slave's clock}
         \label{img:TimeDrift}
     \end{figure}
 
